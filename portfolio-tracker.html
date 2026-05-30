@@ -2102,8 +2102,40 @@ input::placeholder { color: var(--text-muted); }
 }
 
 /* =========================================================
-   MOBILE
+   MOBILE — iPhone optimised
    ========================================================= */
+@media (max-width: 480px) {
+  /* Header: keep only icons, hide text labels, always show ⋮ */
+  .header-controls { gap: 4px; flex-wrap: nowrap; overflow: visible; }
+  .header-btn span { display: none; }          /* hide button text */
+  .header-btn { padding: 8px 10px; }
+  .fx-pill span:first-child { display: none; } /* hide "USD/SGD" label */
+  #driveSaveBtn, #driveLoadBtn { display: none !important; } /* drive on ⋮ menu */
+  .menu-wrap { margin-left: auto; }            /* push ⋮ to far right */
+
+  /* Tabs: scrollable horizontal strip */
+  .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; gap: 0; }
+  .tab  { white-space: nowrap; flex-shrink: 0; font-size: 12px; padding: 10px 12px; }
+
+  /* Cards: tighter padding */
+  .card { padding: 14px 12px; }
+  .kpi-row { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kpi-card.featured { grid-column: span 2; }
+  .kpi-value { font-size: 20px; }
+
+  /* Dividend form: stack vertically */
+  .div-form-row { flex-direction: column; }
+  .div-form-field { min-width: 100% !important; }
+
+  /* Modal: full width */
+  .modal-box { width: 96vw; max-width: 96vw; margin: 12px auto; }
+  .form-grid  { grid-template-columns: 1fr; }
+  .form-grid .field.full { grid-column: span 1; }
+
+  /* Tables: allow horizontal scroll */
+  .data-table { font-size: 11px; }
+  table.data-table { min-width: 600px; }
+}
 @media (max-width: 640px) {
   .app { padding: 16px 14px 60px; }
   .app-header { flex-direction: column; align-items: flex-start; gap: 12px; }
@@ -2160,6 +2192,15 @@ input::placeholder { color: var(--text-muted); }
         </button>
         <div class="menu hidden" id="menuDropdown">
           <div class="menu-section-label">Backup</div>
+          <div class="menu-section-label">Backup</div>
+          <button class="menu-item" id="menuDriveSave" onclick="driveSave()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
+            Save to Google Drive
+          </button>
+          <button class="menu-item" id="menuDriveLoad" onclick="driveLoad()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12l4 4 4-4M12 8v8"/></svg>
+            Load from Google Drive
+          </button>
           <button class="menu-item" id="menuDriveSetup">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
             <span id="driveMenuLabel">Set up Google Drive sync</span>
@@ -4386,7 +4427,7 @@ function rerenderAll() {
   if (state.activeTab === 'dashboard') renderDashboard();
   if (state.activeTab === 'holdings') renderHoldings();
   if (state.activeTab === 'fixed-income') renderFixedIncome();
-  if (state.activeTab === 'dividends') renderDividends(false);
+  if (state.activeTab === 'dividends') { renderDividends(false); populateDivAddForm(); }
   if (state.activeTab === 'cashflow') renderCashflow();
   if (state.activeTab === 'sold') renderSold();
   if (state.activeTab === 'add') renderTransactions();
@@ -6835,12 +6876,6 @@ function recalcDivTotal() {
     }
   }
 }
-
-// Save the manually entered dividend
-window.addManualDividend = addManualDividend;
-window.updateDivAddCalculator = updateDivAddCalculator;
-window.recalcDivTotal = recalcDivTotal;
-window.populateDivAddForm = populateDivAddForm;
 
 // Called from the stock detail modal's "Add dividend" button
 function showAddDividendModal(code) {
