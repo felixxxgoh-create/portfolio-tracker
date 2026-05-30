@@ -6693,17 +6693,17 @@ function addManualDividend(preCode = null) {
   renderDividends(true);
   toast('success', `${kindLabel} added: <strong>${escapeHtml(code)}</strong> · paid ${payDate} · ${currencySymbol(currency)}${formatNum(total.toFixed(2))}`);
 
-  // Reset form (keep code and kind selected, clear amounts and dates)
+  // Reset form — keep stock, kind, and dates so user can quickly add
+  // another dividend for the same stock (e.g. two FCT entries same date)
+  // Only clear the per-share amount and remarks
   const sharesEl   = document.getElementById('divAddShares');
   const perShareEl = document.getElementById('divAddPerShare');
   const remarksEl  = document.getElementById('divAddRemarks');
-  const cumEl      = document.getElementById('divAddCumDate');
-  const payEl      = document.getElementById('divAddPayDate');
   if (sharesEl)   { sharesEl.value = ''; sharesEl._manualOverride = false; }
   if (perShareEl)   perShareEl.value = '';
   if (remarksEl)    remarksEl.value = '';
-  if (cumEl)        cumEl.value = '';
-  if (payEl)        payEl.value = '';
+  // Re-trigger so shares auto-fill again immediately for next entry
+  updateDivAddCalculator();
   recalcDivTotal();
 }
 window.addManualDividend = addManualDividend;
@@ -6837,62 +6837,6 @@ function recalcDivTotal() {
 }
 
 // Save the manually entered dividend
-function addManualDividend(preCode = null) {
-  const code     = preCode || document.getElementById('divAddCode')?.value || '';
-  const cumDate  = document.getElementById('divAddCumDate')?.value || '';
-  const shares   = parseFloat(document.getElementById('divAddShares')?.value) || 0;
-  const perShare = parseFloat(document.getElementById('divAddPerShare')?.value) || 0;
-  const remarks  = (document.getElementById('divAddRemarks')?.value || '').trim();
-
-  if (!code)     { toast('error', 'Please select a stock'); return; }
-  if (!cumDate)  { toast('error', 'Please enter the cum-dividend date'); return; }
-  if (shares <= 0) { toast('error', 'Share count must be greater than zero'); return; }
-  if (perShare <= 0) { toast('error', 'Dividend per share must be greater than zero'); return; }
-
-  const meta = lookupByCode(code);
-  const currency = meta?.currency || 'SGD';
-  const total = shares * perShare;
-
-  const tx = {
-    id: 't_' + Math.random().toString(36).slice(2, 9),
-    addedAt: new Date().toISOString(),
-    type: meta?.type || 'Stock',
-    kind: 'Div',
-    code,
-    name: meta?.name || code,
-    currency,
-    category: meta?.category || 'Dividend',
-    date: cumDate,
-    quantity: shares,
-    price: perShare,
-    fees: 0,
-    brokerage: 'DBS Treasures',
-    notes: remarks || `Manual: ${formatNum(shares)} shares × ${currencySymbol(currency)}${perShare.toFixed(4)}/share`,
-    _manual: true,
-  };
-
-  // Check for duplicate (same code + date)
-  const dupKey = `${code}|${cumDate}`;
-  const existing = state.transactions.find(t => t.kind === 'Div' && `${t.code}|${t.date}` === dupKey);
-  if (existing) {
-    const ok = confirm(`A dividend for ${code} on ${cumDate} already exists (${currencySymbol(currency)}${formatNum(existing.quantity * existing.price)}). Add another anyway?`);
-    if (!ok) return;
-  }
-
-  state.transactions.unshift(tx);
-  saveState();
-  renderDividends(true);
-  toast('success', `Dividend added: <strong>${escapeHtml(code)}</strong> · ${cumDate} · ${currencySymbol(currency)}${formatNum(total.toFixed(2))}`);
-
-  // Reset form (keep code selected, clear amounts)
-  const sharesEl = document.getElementById('divAddShares');
-  const perShareEl = document.getElementById('divAddPerShare');
-  const remarksEl = document.getElementById('divAddRemarks');
-  if (sharesEl) { sharesEl.value = ''; sharesEl._manualOverride = false; }
-  if (perShareEl) perShareEl.value = '';
-  if (remarksEl) remarksEl.value = '';
-  recalcDivTotal();
-}
 window.addManualDividend = addManualDividend;
 window.updateDivAddCalculator = updateDivAddCalculator;
 window.recalcDivTotal = recalcDivTotal;
