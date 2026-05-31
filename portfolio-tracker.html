@@ -2121,46 +2121,79 @@ input::placeholder { color: var(--text-muted); }
 .global-option-badge { background: var(--gold-50); color: var(--gold-700); font-size: 10px; padding: 1px 6px; border-radius: 4px; font-weight: 600; }
    ========================================================= */
 @media (max-width: 480px) {
-  /* Header: icon-only, always show ⋮ at right edge */
-  .header-controls { gap: 4px; flex-wrap: nowrap; overflow: hidden; align-items: center; }
-  .header-btn span { display: none; }
-  .header-btn { padding: 8px 9px; min-width: 0; flex-shrink: 1; }
-  .fx-pill { padding: 5px 7px; font-size: 11px; flex-shrink: 1; }
-  .fx-pill span:first-child { display: none; }
-  /* Hide drive buttons from header — they're in the ⋮ menu */
-  #driveSaveBtn, #driveLoadBtn { display: none !important; }
-  /* Hide Import button — use ⋮ → Import Excel instead */
-  #importBtn { display: none !important; }
-  /* Pin ⋮ to the far right, never shrink */
-  .menu-wrap { margin-left: auto; flex-shrink: 0; }
+  /* ── App container ── */
+  .app { padding: 10px 10px 60px; }
 
-  /* Tabs: scrollable horizontal strip */
+  /* ── Header: single row, brand + controls side by side ── */
+  .app-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 0 14px;
+    flex-wrap: nowrap;
+  }
+  /* Shrink brand text */
+  .brand-name { font-size: 14px; }
+  .brand-sub  { font-size: 10px; }
+  .brand-mark { width: 32px; height: 32px; font-size: 12px; }
+
+  /* Controls: only show FX pill + Refresh icon + ⋮ */
+  .header-controls {
+    gap: 4px;
+    flex-wrap: nowrap;
+    overflow: hidden;
+    align-items: center;
+    flex-shrink: 0;
+    max-width: calc(100vw - 120px);
+  }
+  .header-btn span { display: none; }           /* icon only */
+  .header-btn { padding: 7px 8px; min-width: 0; flex-shrink: 1; }
+  .fx-pill { padding: 5px 7px; font-size: 11px; flex-shrink: 1; min-width: 0; }
+  .fx-pill span:first-child { display: none; }  /* hide "USD/SGD" label */
+  /* Hide drive and import buttons — available in ⋮ menu */
+  #driveSaveBtn, #driveLoadBtn, #importBtn { display: none !important; }
+  /* Pin ⋮ to right, never shrink or overflow */
+  .menu-wrap { margin-left: 2px; flex-shrink: 0; flex-grow: 0; }
+
+  /* ── Tabs ── */
   .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; gap: 0; }
-  .tab  { white-space: nowrap; flex-shrink: 0; font-size: 12px; padding: 10px 12px; }
+  .tab  { white-space: nowrap; flex-shrink: 0; font-size: 12px; padding: 10px 11px; }
 
-  /* Cards: tighter padding */
-  .card { padding: 14px 12px; }
+  /* ── KPI cards ── */
   .kpi-row { grid-template-columns: 1fr 1fr; gap: 8px; }
   .kpi-card.featured { grid-column: span 2; }
-  .kpi-value { font-size: 20px; }
+  .kpi-card { padding: 12px 10px; overflow: hidden; }
+  .kpi-label { font-size: 10px; }
+  .kpi-value { font-size: clamp(13px, 4vw, 18px); word-break: break-word; overflow-wrap: anywhere; }
+  .kpi-card.featured .kpi-value { font-size: clamp(16px, 5.5vw, 26px); }
+  .kpi-sub { font-size: 10px; overflow: hidden; text-overflow: ellipsis; }
 
-  /* Dividend form: stack vertically */
+  /* ── Cards ── */
+  .card { padding: 12px 10px; border-radius: 10px; }
+
+  /* ── Dividend form ── */
   .div-form-row { flex-direction: column; }
   .div-form-field { min-width: 100% !important; }
 
-  /* Modal: full width */
+  /* ── Modals ── */
   .modal-box { width: 96vw; max-width: 96vw; margin: 12px auto; }
   .form-grid  { grid-template-columns: 1fr; }
   .form-grid .field.full { grid-column: span 1; }
 
-  /* Tables: allow horizontal scroll */
+  /* ── Tables ── */
   .data-table { font-size: 11px; }
-  table.data-table { min-width: 600px; }
+  table.data-table { min-width: 500px; }
+
+  /* ── Menu dropdown ── */
+  .menu { right: 0; left: auto; min-width: 220px; }
 }
+
 @media (max-width: 640px) {
-  .app { padding: 16px 14px 60px; }
-  .app-header { flex-direction: column; align-items: flex-start; gap: 12px; }
-  .card { padding: 20px 18px; }
+  .app { padding: 12px 12px 60px; }
+  .app-header { flex-direction: row; align-items: center; gap: 12px; flex-wrap: nowrap; }
+  .header-controls { width: auto; justify-content: flex-end; }
+  .card { padding: 16px 14px; }
   .dropdown-item { grid-template-columns: 80px 1fr auto; gap: 10px; padding: 10px 12px; }
   .selected-card { flex-wrap: wrap; }
   .selected-card .clear-selection { width: 100%; margin-top: 6px; }
@@ -2169,7 +2202,6 @@ input::placeholder { color: var(--text-muted); }
   .modal { max-height: 94vh; }
   .modal-body { padding: 16px 18px; }
   .modal-header, .modal-footer { padding: 14px 18px; }
-  .header-controls { width: 100%; justify-content: flex-start; }
 }
 </style>
 </head>
