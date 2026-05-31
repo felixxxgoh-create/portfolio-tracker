@@ -2101,8 +2101,24 @@ input::placeholder { color: var(--text-muted); }
   margin-top: 2px;
 }
 
-/* =========================================================
-   MOBILE — iPhone optimised
+/* ── Global tab add buttons ─────────────────────────── */
+.global-add-btn {
+  display: flex; align-items: center; gap: 14px;
+  padding: 13px 14px; border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--bg-elevated);
+  text-align: left; width: 100%; cursor: pointer;
+  transition: background 120ms, border-color 120ms;
+}
+.global-add-btn:hover { background: var(--bg-hover); border-color: var(--border-strong); }
+.global-add-icon { font-size: 22px; font-weight: 700; width: 28px; text-align: center; flex-shrink: 0; }
+.global-add-title { font-size: 13.5px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.global-add-sub   { font-size: 12px; color: var(--text-muted); }
+
+/* ── Global holdings table ──────────────────────────── */
+.global-tag-usd { background: var(--blue-50);  color: var(--blue-700); font-size: 10px; padding: 1px 5px; border-radius: 4px; font-weight: 600; }
+.global-tag-eur { background: #EEF4FF;          color: #3355AA;         font-size: 10px; padding: 1px 5px; border-radius: 4px; font-weight: 600; }
+.global-tag-gbp { background: #F0F8EE;          color: #2D6A20;         font-size: 10px; padding: 1px 5px; border-radius: 4px; font-weight: 600; }
+.global-option-badge { background: var(--gold-50); color: var(--gold-700); font-size: 10px; padding: 1px 6px; border-radius: 4px; font-weight: 600; }
    ========================================================= */
 @media (max-width: 480px) {
   /* Header: keep only icons, hide text labels, always show ⋮ */
@@ -2191,7 +2207,12 @@ input::placeholder { color: var(--text-muted); }
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
         </button>
         <div class="menu hidden" id="menuDropdown">
-          <div class="menu-section-label">Backup</div>
+          <div class="menu-section-label">Prices</div>
+          <button class="menu-item" id="menuPriceApi">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span id="priceApiMenuLabel">Set up price API key</span>
+          </button>
+          <div class="menu-divider"></div>
           <div class="menu-section-label">Backup</div>
           <button class="menu-item" id="menuDriveSave" onclick="driveSave()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
@@ -2243,6 +2264,7 @@ input::placeholder { color: var(--text-muted); }
     <button class="tab" data-panel="cashflow">Cash Flow</button>
     <button class="tab" data-panel="sold">Sold</button>
     <button class="tab active" data-panel="add">Add Transactions <span class="count" id="cntTx">0</span></button>
+    <button class="tab" data-panel="global">Global</button>
   </nav>
 
   <main>
@@ -2528,6 +2550,78 @@ input::placeholder { color: var(--text-muted); }
       </section>
     </section>
 
+    <!-- ============== GLOBAL ============== -->
+    <section class="tab-panel" id="panel-global">
+      <div class="kpi-row" id="globalKpiRow"></div>
+
+      <!-- Holdings -->
+      <section class="card">
+        <div class="card-header">
+          <h2>Current holdings</h2>
+          <p class="muted">Active positions on NYSE, NASDAQ, AMS and LSE. Option premiums collected reduce the effective cost basis shown.</p>
+        </div>
+        <div id="globalHoldingsWrap"></div>
+      </section>
+
+      <!-- Option premiums collected -->
+      <section class="card">
+        <div class="card-header">
+          <h2>Option premiums collected</h2>
+          <p class="muted">All option premium income received — from selling puts, covered calls, and other option strategies.</p>
+        </div>
+        <div id="globalOptionsWrap"></div>
+      </section>
+
+      <!-- Closed positions -->
+      <section class="card">
+        <div class="card-header">
+          <h2>Closed positions</h2>
+          <p class="muted">Fully exited positions. Realised P/L includes option premiums collected.</p>
+        </div>
+        <div id="globalClosedWrap"></div>
+      </section>
+
+      <!-- Add transaction -->
+      <section class="card" id="globalAddCard">
+        <div class="card-header">
+          <h2>Add transaction</h2>
+          <p class="muted">Record a new buy, sell, or option event.</p>
+        </div>
+        <div id="globalAddWrap">
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <button class="global-add-btn" onclick="showGlobalForm('buy')">
+              <span class="global-add-icon" style="color:var(--green-700);">↑</span>
+              <div><div class="global-add-title">Buy shares</div><div class="global-add-sub">Record a stock purchase</div></div>
+            </button>
+            <button class="global-add-btn" onclick="showGlobalForm('sell')">
+              <span class="global-add-icon" style="color:var(--red-700);">↓</span>
+              <div><div class="global-add-title">Sell shares</div><div class="global-add-sub">Record a stock sale</div></div>
+            </button>
+            <button class="global-add-btn" onclick="showGlobalForm('premium')">
+              <span class="global-add-icon" style="color:var(--gold-700);">$</span>
+              <div><div class="global-add-title">Option premium collected</div><div class="global-add-sub">Premium received — no shares change hands</div></div>
+            </button>
+            <button class="global-add-btn" onclick="showGlobalForm('put-assigned')">
+              <span class="global-add-icon" style="color:var(--gold-700);">↑</span>
+              <div><div class="global-add-title">Put assigned — shares bought</div><div class="global-add-sub">100 shares acquired + premium already collected upfront</div></div>
+            </button>
+            <button class="global-add-btn" onclick="showGlobalForm('call-assigned')">
+              <span class="global-add-icon" style="color:var(--gold-700);">↓</span>
+              <div><div class="global-add-title">Call assigned — shares sold</div><div class="global-add-sub">100 shares called away + premium already collected upfront</div></div>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Full transaction log -->
+      <section class="card">
+        <div class="card-header">
+          <h2>Transaction log</h2>
+        </div>
+        <div id="globalTxLogWrap"></div>
+      </section>
+    </section>
+
     <!-- ============== SOLD ============== -->
     <section class="tab-panel" id="panel-sold">
       <section class="card">
@@ -2628,6 +2722,7 @@ const SGX_DATABASE = [
   { ticker: 'O39.SI', name: 'Oversea-Chinese Banking Corporation', short: 'OCBC', type: 'Stock', sector: 'Banking', category: 'Dividend', currency: 'SGD' },
   { ticker: 'U11.SI', name: 'United Overseas Bank', short: 'UOB', type: 'Stock', sector: 'Banking', category: 'Dividend', currency: 'SGD' },
   { ticker: 'S41.SI', name: 'Hong Leong Finance', short: 'Hong Leong Finance', type: 'Stock', sector: 'Financial Services', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'F83.SI', name: 'United Industrial Corporation', short: 'UIC', type: 'Stock', sector: 'Real Estate', category: 'Dividend', currency: 'SGD' },
 
   // ====================== TELCOS ======================
   { ticker: 'Z74.SI', name: 'Singapore Telecommunications', short: 'Singtel', type: 'Stock', sector: 'Telecom', category: 'Dividend', currency: 'SGD' },
@@ -2638,6 +2733,7 @@ const SGX_DATABASE = [
   { ticker: 'S68.SI', name: 'Singapore Exchange', short: 'SGX', type: 'Stock', sector: 'Financial Services', category: 'Dividend', currency: 'SGD' },
   { ticker: 'AIY.SI', name: 'iFAST Corporation', short: 'iFAST', type: 'Stock', sector: 'Fintech', category: 'Growth', currency: 'SGD' },
   { ticker: 'YF8.SI', name: 'Yangzijiang Financial Holding', short: 'YZJ Financial', type: 'Stock', sector: 'Financial Services', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'BWCU.SI', name: 'PhillipCapital Money Market ETF', short: 'PhillipCap MMF', type: 'ETF', sector: 'ETF - Money Market', category: 'Dividend', currency: 'SGD' },
 
   // ====================== CONGLOMERATES & DIVERSIFIED ======================
   { ticker: '9CI.SI', name: 'CapitaLand Investment', short: 'CLI', type: 'Stock', sector: 'Real Estate Investment Manager', category: 'Dividend', currency: 'SGD' },
@@ -2651,147 +2747,118 @@ const SGX_DATABASE = [
   { ticker: 'F9D.SI', name: 'Boustead Singapore', short: 'Boustead SG', type: 'Stock', sector: 'Engineering & Geospatial', category: 'Dividend', currency: 'SGD' },
   { ticker: 'AVM.SI', name: 'Boustead Projects', short: 'Boustead Projects', type: 'Stock', sector: 'Real Estate', category: 'Dividend', currency: 'SGD' },
   { ticker: 'H02.SI', name: 'Haw Par Corporation', short: 'Haw Par', type: 'Stock', sector: 'Healthcare & Investments', category: 'Dividend', currency: 'SGD' },
-
-  // ====================== USER PORTFOLIO — additional stocks ======================
-  { ticker: 'A17U.SI', name: 'Ascendas Real Estate Investment Trust', short: 'Ascendas REIT', type: 'REIT', sector: 'Industrial & Logistics', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'S7OU.SI', name: 'Asian Pay Television Trust', short: 'APTT', type: 'Stock', sector: 'Media & Telecom', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'CTN.SI', name: 'Breadtalk Group', short: 'Breadtalk', type: 'Stock', sector: 'F&B', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'OU8.SI', name: 'Centurion Corporation', short: 'Centurion', type: 'Stock', sector: 'Specialised REITs', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'C09.SI', name: 'City Developments', short: 'CDL', type: 'Stock', sector: 'Real Estate', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'DCRU.SI', name: 'Digital Core REIT', short: 'Digital Core', type: 'REIT', sector: 'Data Centre', category: 'Dividend', currency: 'USD' },
-  { ticker: 'AW9U.SI', name: 'First REIT', short: 'First REIT', type: 'REIT', sector: 'Healthcare', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'EB5.SI', name: 'First Resources', short: 'First Resources', type: 'Stock', sector: 'Agribusiness', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'J69U.SI', name: 'Frasers Centrepoint Trust', short: 'FCT', type: 'REIT', sector: 'Retail', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'TQ5.SI', name: 'Frasers Property', short: 'Frasers Property', type: 'Stock', sector: 'Real Estate', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'UD1U.SI', name: 'IREIT Global', short: 'IREIT', type: 'REIT', sector: 'Office (Europe)', category: 'Dividend', currency: 'SGD' },
-  { ticker: '42R.SI', name: 'Jumbo Group', short: 'Jumbo', type: 'Stock', sector: 'F&B', category: 'Dividend', currency: 'SGD' },
-  { ticker: '5MZ.SI', name: 'Kingsmen Creatives', short: 'Kingsmen', type: 'Stock', sector: 'Retail Fixtures', category: 'Dividend', currency: 'SGD' },
-  { ticker: '546.SI', name: 'Medtecs International', short: 'Medtecs', type: 'Stock', sector: 'Healthcare', category: 'Growth', currency: 'SGD' },
-  { ticker: 'Q01.SI', name: 'QAF', short: 'QAF', type: 'Stock', sector: 'F&B', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'CRPU.SI', name: 'Sasseur REIT', short: 'Sasseur', type: 'REIT', sector: 'Retail (China)', category: 'Dividend', currency: 'SGD' },
-  { ticker: '5CP.SI', name: 'Silverlake Axis', short: 'Silverlake', type: 'Stock', sector: 'Fintech', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'S63.SI', name: 'Singapore Technologies Engineering', short: 'ST Engineering', type: 'Stock', sector: 'Defence & Engineering', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'P40U.SI', name: 'Starhill Global REIT', short: 'Starhill', type: 'REIT', sector: 'Retail & Office', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'S20.SI', name: 'Straits Trading', short: 'Straits Trading', type: 'Stock', sector: 'Real Estate & Resources', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'Y92.SI', name: 'Thai Beverage', short: 'ThaiBev', type: 'Stock', sector: 'Beverages', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'BS6.SI', name: 'Yangzijiang Shipbuilding', short: 'YZJ Shipbuilding', type: 'Stock', sector: 'Shipbuilding', category: 'Dividend', currency: 'SGD' },
-  { ticker: '5VJ.SI', name: 'Halcyon Agri Corporation', short: 'Halcyon Agri', type: 'Stock', sector: 'Agribusiness', category: 'Growth', currency: 'SGD' },
-  { ticker: 'OTS.SI', name: 'OTS Holdings', short: 'OTS', type: 'Stock', sector: 'Manufacturing', category: 'Dividend', currency: 'SGD' },
-  { ticker: '5WF.SI', name: 'ISOTeam', short: 'ISOTeam', type: 'Stock', sector: 'Building Services', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'S71.SI', name: 'Sunright', short: 'Sunright', type: 'Stock', sector: 'Electronics Services', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'CHJ.SI', name: 'Uni-Asia Group', short: 'Uni-Asia', type: 'Stock', sector: 'Shipping & Finance', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'S51.SI', name: 'Sembcorp Marine / Seatrium', short: 'Seatrium', type: 'Stock', sector: 'Marine Engineering', category: 'Growth', currency: 'SGD' },
-  { ticker: 'F34.SI', name: 'Wilmar International', short: 'Wilmar', type: 'Stock', sector: 'Agribusiness', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'RW0U.SI', name: 'Mapletree North Asia Commercial Trust', short: 'MNACT', type: 'REIT', sector: 'Office & Retail (North Asia)', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'N2IU.SI', name: 'Mapletree Pan Asia Commercial Trust', short: 'MPACT', type: 'REIT', sector: 'Office & Retail (Pan Asia)', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'AU8U.SI', name: 'CapitaLand China Trust', short: 'CLCT', type: 'REIT', sector: 'Retail (China)', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'C38U.SI', name: 'CapitaLand Integrated Commercial Trust', short: 'CICT', type: 'REIT', sector: 'Retail & Office', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'C31.SI', name: 'CapitaLand', short: 'CapitaLand', type: 'Stock', sector: 'Real Estate', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'CMOU.SI', name: 'Keppel Pacific Oak US REIT', short: 'KORE', type: 'REIT', sector: 'Office (US)', category: 'Dividend', currency: 'USD' },
-  { ticker: 'OXMU.SI', name: 'Prime US REIT', short: 'Prime US', type: 'REIT', sector: 'Office (US)', category: 'Dividend', currency: 'USD' },
-  { ticker: 'ODBU.SI', name: 'United Hampshire US REIT', short: 'UH US REIT', type: 'REIT', sector: 'Retail (US)', category: 'Dividend', currency: 'USD' },
-  { ticker: 'LIW.SI', name: 'Eagle Hospitality Trust', short: 'Eagle Hospitality', type: 'REIT', sector: 'Hospitality (US)', category: 'Dividend', currency: 'USD' },
-  { ticker: 'HST.SI', name: 'Lion-OCBC Securities Hang Seng TECH ETF', short: 'HS Tech ETF', type: 'ETF', sector: 'Technology (HK)', category: 'Growth', currency: 'SGD' },
-  { ticker: 'JYEU.SI', name: 'Lendlease Global Commercial REIT', short: 'LREIT', type: 'REIT', sector: 'Retail & Office', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'O5RU.SI', name: 'AIMS APAC REIT', short: 'AIMS APAC', type: 'REIT', sector: 'Industrial', category: 'Dividend', currency: 'SGD' },
-
-  // ====================== TRANSPORT & AVIATION ======================
-  { ticker: 'C6L.SI', name: 'Singapore Airlines', short: 'SIA', type: 'Stock', sector: 'Airlines', category: 'Growth', currency: 'SGD' },
-  { ticker: 'S58.SI', name: 'SATS Ltd', short: 'SATS', type: 'Stock', sector: 'Aviation Services', category: 'Growth', currency: 'SGD' },
-  { ticker: 'S59.SI', name: 'SIA Engineering Company', short: 'SIA Engineering', type: 'Stock', sector: 'Aerospace MRO', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'C52.SI', name: 'ComfortDelGro Corporation', short: 'ComfortDelGro', type: 'Stock', sector: 'Land Transport', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'S08.SI', name: 'Singapore Post', short: 'SingPost', type: 'Stock', sector: 'Postal & Logistics', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'S19.SI', name: 'Singapore Shipping Corporation', short: 'SSC', type: 'Stock', sector: 'Marine Logistics', category: 'Dividend', currency: 'SGD' },
-
-  // ====================== MARINE & ENGINEERING ======================
-  { ticker: 'BS6.SI', name: 'Yangzijiang Shipbuilding', short: 'YZJ Shipbuilding', type: 'Stock', sector: 'Shipbuilding', category: 'Growth', currency: 'SGD' },
-  { ticker: '5E2.SI', name: 'Seatrium Limited', short: 'Seatrium', type: 'Stock', sector: 'Offshore Marine', category: 'Growth', currency: 'SGD' },
-  { ticker: 'S63.SI', name: 'Singapore Technologies Engineering', short: 'ST Engineering', type: 'Stock', sector: 'Defence & Aerospace', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'DU4.SI', name: 'Mermaid Maritime', short: 'Mermaid Maritime', type: 'Stock', sector: 'Offshore Services', category: 'Growth', currency: 'SGD' },
-
-  // ====================== HOSPITALITY & GAMING ======================
-  { ticker: 'G13.SI', name: 'Genting Singapore', short: 'Genting SG', type: 'Stock', sector: 'Gaming & Hospitality', category: 'Dividend', currency: 'SGD' },
-
-  // ====================== F&B / CONSUMER ======================
-  { ticker: 'Y92.SI', name: 'Thai Beverage', short: 'ThaiBev', type: 'Stock', sector: 'F&B', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'F99.SI', name: 'Fraser and Neave', short: 'F&N', type: 'Stock', sector: 'F&B', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'OV8.SI', name: 'Sheng Siong Group', short: 'Sheng Siong', type: 'Stock', sector: 'Retail (Supermarkets)', category: 'Dividend', currency: 'SGD' },
-  { ticker: '5ML.SI', name: 'Old Chang Kee', short: 'Old Chang Kee', type: 'Stock', sector: 'F&B', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'AGS.SI', name: 'The Hour Glass', short: 'Hour Glass', type: 'Stock', sector: 'Luxury Retail', category: 'Dividend', currency: 'SGD' },
-
-  // ====================== AGRIBUSINESS ======================
-  { ticker: 'F34.SI', name: 'Wilmar International', short: 'Wilmar', type: 'Stock', sector: 'Agribusiness', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'E5H.SI', name: 'Golden Agri-Resources', short: 'Golden Agri', type: 'Stock', sector: 'Agribusiness', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'P8Z.SI', name: 'Bumitama Agri', short: 'Bumitama', type: 'Stock', sector: 'Agribusiness', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'EB5.SI', name: 'First Resources', short: 'First Resources', type: 'Stock', sector: 'Agribusiness', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'VC2.SI', name: 'Olam Group', short: 'Olam', type: 'Stock', sector: 'Agribusiness', category: 'Growth', currency: 'SGD' },
-  { ticker: 'UD2.SI', name: 'Japfa Ltd', short: 'Japfa', type: 'Stock', sector: 'Agribusiness', category: 'Dividend', currency: 'SGD' },
-
-  // ====================== REAL ESTATE (DEVELOPERS) ======================
-  { ticker: 'C09.SI', name: 'City Developments', short: 'CDL', type: 'Stock', sector: 'Real Estate', category: 'Dividend', currency: 'SGD' },
   { ticker: 'U14.SI', name: 'UOL Group', short: 'UOL', type: 'Stock', sector: 'Real Estate', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'U06.SI', name: 'Singapore Land Group', short: 'SingLand', type: 'Stock', sector: 'Real Estate', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'TQ5.SI', name: 'Frasers Property', short: 'Frasers Property', type: 'Stock', sector: 'Real Estate', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'F17.SI', name: 'GuocoLand', short: 'GuocoLand', type: 'Stock', sector: 'Real Estate', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'H13.SI', name: 'Ho Bee Land', short: 'Ho Bee Land', type: 'Stock', sector: 'Real Estate', category: 'Dividend', currency: 'SGD' },
-  { ticker: '5UX.SI', name: 'Oxley Holdings', short: 'Oxley', type: 'Stock', sector: 'Real Estate', category: 'Growth', currency: 'SGD' },
-  { ticker: 'OU8.SI', name: 'Centurion Corporation', short: 'Centurion', type: 'Stock', sector: 'Accommodation Real Estate', category: 'Dividend', currency: 'SGD' },
-  { ticker: '41O.SI', name: 'LHN Limited', short: 'LHN', type: 'Stock', sector: 'Real Estate', category: 'Dividend', currency: 'SGD' },
+
+  // ====================== REAL ESTATE / PROPERTY ======================
+  { ticker: 'C09.SI', name: 'City Developments', short: 'CDL', type: 'Stock', sector: 'Real Estate', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'S69.SI', name: 'SingHaiyi Group', short: 'SingHaiyi', type: 'Stock', sector: 'Real Estate', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'F17.SI', name: 'Frasers Property', short: 'Frasers Property', type: 'Stock', sector: 'Real Estate', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'OUE.SI', name: 'OUE Limited', short: 'OUE', type: 'Stock', sector: 'Real Estate & Hospitality', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'F34.SI', name: 'Wilmar International', short: 'Wilmar', type: 'Stock', sector: 'Agribusiness', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'EB5.SI', name: 'First Resources', short: 'First Resources', type: 'Stock', sector: 'Agribusiness', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'G13.SI', name: 'Genting Singapore', short: 'Genting SG', type: 'Stock', sector: 'Gaming & Hospitality', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'S20.SI', name: 'Straits Trading', short: 'Straits Trading', type: 'Stock', sector: 'Real Estate & Resources', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'EH8.SI', name: 'Bukit Sembawang Estates', short: 'Bukit Sembawang', type: 'Stock', sector: 'Real Estate', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'T14.SI', name: 'Tuan Sing Holdings', short: 'Tuan Sing', type: 'Stock', sector: 'Real Estate', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'R01.SI', name: 'Ho Bee Land', short: 'Ho Bee Land', type: 'Stock', sector: 'Real Estate', category: 'Dividend', currency: 'SGD' },
+
+  // ====================== INDUSTRIALS & MANUFACTURING ======================
+  { ticker: 'S51.SI', name: 'Sembcorp Marine', short: 'Sembmarine', type: 'Stock', sector: 'Marine Engineering', category: 'Growth', currency: 'SGD' },
+  { ticker: 'BEC.SI', name: 'BRC Asia', short: 'BRC Asia', type: 'Stock', sector: 'Industrials', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'MS7.SI', name: 'Miyoshi', short: 'Miyoshi', type: 'Stock', sector: 'Manufacturing', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'P9D.SI', name: 'Pan-United Corporation', short: 'Pan-United', type: 'Stock', sector: 'Building Materials', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'P52.SI', name: 'Pavillon Holdings', short: 'Pavillon', type: 'Stock', sector: 'Retail', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'S51.SI', name: 'SembMarine', short: 'SembMarine', type: 'Stock', sector: 'Marine', category: 'Growth', currency: 'SGD' },
+  { ticker: 'BN4.SI', name: 'Keppel Ltd', short: 'Keppel', type: 'Stock', sector: 'Conglomerate', category: 'Dividend', currency: 'SGD' },
+  { ticker: '5WF.SI', name: 'ISOTeam', short: 'ISOTeam', type: 'Stock', sector: 'Building Services', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'OTS.SI', name: 'OTS Holdings', short: 'OTS', type: 'Stock', sector: 'Manufacturing', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'CHJ.SI', name: 'Uni-Asia Group', short: 'Uni-Asia', type: 'Stock', sector: 'Shipping & Finance', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'K2LU.SI', name: 'Sabana Industrial REIT', short: 'Sabana REIT', type: 'REIT', sector: 'REIT - Industrial', category: 'Dividend', currency: 'SGD' },
+
+  // ====================== DEFENCE & ENGINEERING ======================
+  { ticker: 'S63.SI', name: 'Singapore Technologies Engineering', short: 'ST Engineering', type: 'Stock', sector: 'Defence & Engineering', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'U9E.SI', name: 'ST Engineering (Electronics)', short: 'STE Electronics', type: 'Stock', sector: 'Electronics', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'D78.SI', name: 'Dyna-Mac Holdings', short: 'Dyna-Mac', type: 'Stock', sector: 'Offshore & Marine', category: 'Dividend', currency: 'SGD' },
+
+  // ====================== TECHNOLOGY & ELECTRONICS ======================
+  { ticker: 'V03.SI', name: 'Venture Corporation', short: 'Venture Corp', type: 'Stock', sector: 'Technology', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'BVA.SI', name: 'Nanofilm Technologies International', short: 'Nanofilm', type: 'Stock', sector: 'Technology', category: 'Growth', currency: 'SGD' },
+  { ticker: 'S71.SI', name: 'Sunright', short: 'Sunright', type: 'Stock', sector: 'Electronics Services', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'Y07.SI', name: 'Valuetronics Holdings', short: 'Valuetronics', type: 'Stock', sector: 'Electronics Manufacturing', category: 'Dividend', currency: 'HKD' },
+  { ticker: 'AYA.SI', name: 'ISEC Healthcare', short: 'ISEC Healthcare', type: 'Stock', sector: 'Healthcare', category: 'Dividend', currency: 'SGD' },
+  { ticker: '5CP.SI', name: 'Silverlake Axis', short: 'Silverlake', type: 'Stock', sector: 'Fintech', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'AIY.SI', name: 'iFAST Corporation', short: 'iFAST', type: 'Stock', sector: 'Fintech', category: 'Growth', currency: 'SGD' },
+  { ticker: 'DP8.SI', name: 'Frencken Group', short: 'Frencken', type: 'Stock', sector: 'Technology', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'SGX.SI', name: 'Singapore Exchange', short: 'SGX', type: 'Stock', sector: 'Financial Services', category: 'Dividend', currency: 'SGD' },
 
   // ====================== HEALTHCARE ======================
-  { ticker: 'BSL.SI', name: 'Raffles Medical Group', short: 'Raffles Medical', type: 'Stock', sector: 'Healthcare', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'QC7.SI', name: 'Q&M Dental Group', short: 'Q&M Dental', type: 'Stock', sector: 'Healthcare', category: 'Dividend', currency: 'SGD' },
-  { ticker: '1J5.SI', name: 'Hyphens Pharma International', short: 'Hyphens Pharma', type: 'Stock', sector: 'Healthcare', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'BVA.SI', name: 'Top Glove Corporation', short: 'Top Glove', type: 'Stock', sector: 'Healthcare', category: 'Growth', currency: 'SGD' },
-  { ticker: '1B1.SI', name: 'HC Surgical Specialists', short: 'HC Surgical', type: 'Stock', sector: 'Healthcare', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'Q0F.SI', name: 'Raffles Medical Group', short: 'Raffles Medical', type: 'Stock', sector: 'Healthcare', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'BSL.SI', name: 'HMI Industries', short: 'HMI', type: 'Stock', sector: 'Healthcare', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'F1E.SI', name: 'Asian Healthcare Specialists', short: 'AHS', type: 'Stock', sector: 'Healthcare', category: 'Growth', currency: 'SGD' },
+  { ticker: '546.SI', name: 'Medtecs International', short: 'Medtecs', type: 'Stock', sector: 'Healthcare', category: 'Growth', currency: 'SGD' },
+  { ticker: '5RA.SI', name: 'Acromec', short: 'Acromec', type: 'Stock', sector: 'Engineering', category: 'Growth', currency: 'SGD' },
 
-  // ====================== TECH / SEMICONDUCTORS / MANUFACTURING ======================
-  { ticker: 'V03.SI', name: 'Venture Corporation', short: 'Venture', type: 'Stock', sector: 'Tech Manufacturing', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'AWX.SI', name: 'AEM Holdings', short: 'AEM', type: 'Stock', sector: 'Semiconductor Equipment', category: 'Growth', currency: 'SGD' },
-  { ticker: '558.SI', name: 'UMS Integration', short: 'UMS', type: 'Stock', sector: 'Semiconductor Equipment', category: 'Growth', currency: 'SGD' },
-  { ticker: 'E28.SI', name: 'Frencken Group', short: 'Frencken', type: 'Stock', sector: 'Tech Manufacturing', category: 'Growth', currency: 'SGD' },
-  { ticker: '8AZ.SI', name: 'Aztech Global', short: 'Aztech', type: 'Stock', sector: 'Electronics Manufacturing', category: 'Growth', currency: 'SGD' },
-  { ticker: 'MZH.SI', name: 'Nanofilm Technologies International', short: 'Nanofilm', type: 'Stock', sector: 'Advanced Materials', category: 'Growth', currency: 'SGD' },
-  { ticker: 'AP4.SI', name: 'Riverstone Holdings', short: 'Riverstone', type: 'Stock', sector: 'Manufacturing', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'I07.SI', name: 'ISDN Holdings', short: 'ISDN', type: 'Stock', sector: 'Industrial Automation', category: 'Growth', currency: 'SGD' },
-  { ticker: 'CH8.SI', name: 'China Sunsine Chemical Holdings', short: 'China Sunsine', type: 'Stock', sector: 'Chemicals', category: 'Dividend', currency: 'SGD' },
-  { ticker: '500.SI', name: 'Tai Sin Electric', short: 'Tai Sin', type: 'Stock', sector: 'Industrial Cables', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'BTOU.SI', name: 'Manulife US Real Estate Investment Trust', short: 'Manulife US REIT', type: 'REIT', sector: 'REIT - Office (US)', category: 'Dividend', currency: 'USD' }, // placed here to keep section labels honest below
+  // ====================== CONSUMER & RETAIL ======================
+  { ticker: 'F99.SI', name: 'Sheng Siong Group', short: 'Sheng Siong', type: 'Stock', sector: 'Consumer Staples', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'C52.SI', name: 'ComfortDelGro Corporation', short: 'ComfortDelGro', type: 'Stock', sector: 'Transport', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'Y92.SI', name: 'Thai Beverage', short: 'ThaiBev', type: 'Stock', sector: 'Beverages', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'Q01.SI', name: 'QAF', short: 'QAF', type: 'Stock', sector: 'F&B', category: 'Dividend', currency: 'SGD' },
+  { ticker: '42R.SI', name: 'Jumbo Group', short: 'Jumbo', type: 'Stock', sector: 'F&B', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'CTN.SI', name: 'Breadtalk Group', short: 'Breadtalk', type: 'Stock', sector: 'F&B', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'D8DU.SI', name: 'Daiwa House Logistics Trust', short: 'Daiwa H Logistics', type: 'REIT', sector: 'REIT - Logistics (Japan)', category: 'Dividend', currency: 'SGD' },
+  { ticker: '5MZ.SI', name: 'Kingsmen Creatives', short: 'Kingsmen', type: 'Stock', sector: 'Retail Fixtures', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'P8Z.SI', name: 'Koufu Group', short: 'Koufu', type: 'Stock', sector: 'F&B', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'EVE.SI', name: 'Japan Foods Holding', short: 'Japan Foods', type: 'Stock', sector: 'F&B', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'OU8.SI', name: 'Centurion Corporation', short: 'Centurion', type: 'Stock', sector: 'Specialised REITs', category: 'Dividend', currency: 'SGD' },
 
-  // ====================== OTHER MID/SMALL CAPS ======================
-  { ticker: 'CHZ.SI', name: 'HRnetGroup', short: 'HRnet', type: 'Stock', sector: 'HR Services', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'S7OU.SI', name: 'Asian Pay Television Trust', short: 'APTT', type: 'Stock', sector: 'Media', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'A7RU.SI', name: 'Keppel Infrastructure Trust', short: 'KIT', type: 'Stock', sector: 'Infrastructure', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'CGN.SI', name: 'Best World International', short: 'Best World', type: 'Stock', sector: 'Direct Selling', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'RE4.SI', name: 'Geo Energy Resources', short: 'Geo Energy', type: 'Stock', sector: 'Coal Mining', category: 'Dividend', currency: 'SGD' },
-  { ticker: '5LY.SI', name: 'Marco Polo Marine', short: 'Marco Polo', type: 'Stock', sector: 'Offshore Services', category: 'Growth', currency: 'SGD' },
-  { ticker: 'S7P.SI', name: 'Soilbuild Construction Group', short: 'Soilbuild', type: 'Stock', sector: 'Construction', category: 'Growth', currency: 'SGD' },
-  { ticker: '42C.SI', name: 'iX Biopharma', short: 'iX Biopharma', type: 'Stock', sector: 'Biotech', category: 'Growth', currency: 'SGD' },
-  { ticker: 'B61.SI', name: 'Bukit Sembawang Estates', short: 'Bukit Sembawang', type: 'Stock', sector: 'Real Estate', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'F25.SI', name: 'Fu Yu Corporation', short: 'Fu Yu', type: 'Stock', sector: 'Manufacturing', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'A30.SI', name: 'AsianMicro Holdings', short: 'AsianMicro', type: 'Stock', sector: 'Industrial', category: 'Growth', currency: 'SGD' },
-  { ticker: 'F03.SI', name: 'Food Empire Holdings', short: 'Food Empire', type: 'Stock', sector: 'F&B', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'AWC.SI', name: 'Atlantic Navigation Holdings', short: 'Atlantic Navigation', type: 'Stock', sector: 'Marine', category: 'Growth', currency: 'SGD' },
-  { ticker: 'BEC.SI', name: 'TIH Limited', short: 'TIH', type: 'Stock', sector: 'Investment Holding', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'NR7.SI', name: 'Raffles Education', short: 'Raffles Education', type: 'Stock', sector: 'Education', category: 'Growth', currency: 'SGD' },
+  // ====================== TRANSPORT & LOGISTICS ======================
+  { ticker: 'C6L.SI', name: 'Singapore Airlines', short: 'SIA', type: 'Stock', sector: 'Aviation', category: 'Growth', currency: 'SGD' },
+  { ticker: 'AWX.SI', name: 'SIA Engineering Company', short: 'SIAEC', type: 'Stock', sector: 'Aviation MRO', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'GMG.SI', name: 'Singapore Post', short: 'SingPost', type: 'Stock', sector: 'Logistics', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'BHT.SI', name: 'SBS Transit', short: 'SBS Transit', type: 'Stock', sector: 'Transport', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'NS8U.SI', name: 'SMRT', short: 'SMRT', type: 'Stock', sector: 'Transport', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'FQ7.SI', name: 'Hafnia', short: 'Hafnia', type: 'Stock', sector: 'Shipping', category: 'Dividend', currency: 'USD' },
 
-  // ====================== REITS - MAPLETREE ======================
-  { ticker: 'M44U.SI', name: 'Mapletree Logistics Trust', short: 'MLT', type: 'REIT', sector: 'REIT - Logistics', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'ME8U.SI', name: 'Mapletree Industrial Trust', short: 'MIT', type: 'REIT', sector: 'REIT - Industrial / Data Centre', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'N2IU.SI', name: 'Mapletree Pan Asia Commercial Trust', short: 'MPACT', type: 'REIT', sector: 'REIT - Commercial', category: 'Dividend', currency: 'SGD' },
+  // ====================== SHIPPING & MARINE ======================
+  { ticker: 'BS6.SI', name: 'Yangzijiang Shipbuilding', short: 'YZJ Shipbuilding', type: 'Stock', sector: 'Shipbuilding', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'R31.SI', name: 'Rickmers Maritime', short: 'Rickmers', type: 'Stock', sector: 'Shipping', category: 'Dividend', currency: 'SGD' },
 
-  // ====================== REITS - CAPITALAND ======================
-  { ticker: 'C38U.SI', name: 'CapitaLand Integrated Commercial Trust', short: 'CICT', type: 'REIT', sector: 'REIT - Retail / Office', category: 'Dividend', currency: 'SGD' },
+  // ====================== ENERGY & RESOURCES ======================
+  { ticker: 'BF6.SI', name: 'Pacific Radiance', short: 'Pacific Radiance', type: 'Stock', sector: 'Offshore & Marine', category: 'Growth', currency: 'SGD' },
+  { ticker: 'BGO.SI', name: 'Sembcorp Marine (old)', short: 'SembMarine', type: 'Stock', sector: 'Marine', category: 'Growth', currency: 'SGD' },
+  { ticker: '5VJ.SI', name: 'Halcyon Agri Corporation', short: 'Halcyon Agri', type: 'Stock', sector: 'Agribusiness', category: 'Growth', currency: 'SGD' },
+  { ticker: 'BKV.SI', name: 'Rex International Holding', short: 'Rex International', type: 'Stock', sector: 'Oil & Gas', category: 'Growth', currency: 'SGD' },
+  { ticker: 'UD7.SI', name: 'RH Petrogas', short: 'RH Petrogas', type: 'Stock', sector: 'Oil & Gas', category: 'Growth', currency: 'SGD' },
+
+  // ====================== MEDIA & ENTERTAINMENT ======================
+  { ticker: 'T39.SI', name: 'Mediacorp (unlisted placeholder)', short: 'Mediacorp', type: 'Stock', sector: 'Media', category: 'Growth', currency: 'SGD' },
+  { ticker: 'S7OU.SI', name: 'Asian Pay Television Trust', short: 'APTT', type: 'Stock', sector: 'Media & Telecom', category: 'Dividend', currency: 'SGD' },
+
+  // ====================== SMALL / MID CAPS ======================
+  { ticker: 'AYO.SI', name: 'HG Metal Manufacturing', short: 'HG Metal', type: 'Stock', sector: 'Metals', category: 'Dividend', currency: 'SGD' },
+  { ticker: '570.SI', name: 'Chip Eng Seng Corporation', short: 'Chip Eng Seng', type: 'Stock', sector: 'Real Estate', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'M35.SI', name: 'Alliance Healthcare Group', short: 'Alliance HC', type: 'Stock', sector: 'Healthcare', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'CLN.SI', name: 'Colex Holdings', short: 'Colex', type: 'Stock', sector: 'Waste Management', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'F10.SI', name: 'Fixed Income (placeholder)', short: 'Fixed Income', type: 'Stock', sector: 'Financial Services', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'M1GU.SI', name: 'Sabana Industrial REIT', short: 'Sabana REIT', type: 'REIT', sector: 'REIT - Industrial', category: 'Dividend', currency: 'SGD' },
+
+  // ====================== REITS - CAPITALAND GROUP ======================
+  { ticker: 'C38U.SI', name: 'CapitaLand Integrated Commercial Trust', short: 'CICT', type: 'REIT', sector: 'REIT - Retail & Office', category: 'Dividend', currency: 'SGD' },
   { ticker: 'A17U.SI', name: 'CapitaLand Ascendas REIT', short: 'CLAR', type: 'REIT', sector: 'REIT - Industrial', category: 'Dividend', currency: 'SGD' },
   { ticker: 'AU8U.SI', name: 'CapitaLand China Trust', short: 'CLCT', type: 'REIT', sector: 'REIT - Retail (China)', category: 'Dividend', currency: 'SGD' },
   { ticker: 'HMN.SI', name: 'CapitaLand Ascott Trust', short: 'CLAS', type: 'REIT', sector: 'REIT - Hospitality', category: 'Dividend', currency: 'SGD' },
 
-  // ====================== REITS - FRASERS ======================
+  // ====================== REITS - MAPLETREE GROUP ======================
+  { ticker: 'ME8U.SI', name: 'Mapletree Industrial Trust', short: 'MIT', type: 'REIT', sector: 'REIT - Industrial', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'N2IU.SI', name: 'Mapletree Pan Asia Commercial Trust', short: 'MPACT', type: 'REIT', sector: 'REIT - Commercial', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'M44U.SI', name: 'Mapletree Logistics Trust', short: 'MLT', type: 'REIT', sector: 'REIT - Logistics', category: 'Dividend', currency: 'SGD' },
+
+  // ====================== REITS - FRASERS GROUP ======================
   { ticker: 'J69U.SI', name: 'Frasers Centrepoint Trust', short: 'FCT', type: 'REIT', sector: 'REIT - Retail', category: 'Dividend', currency: 'SGD' },
   { ticker: 'BUOU.SI', name: 'Frasers Logistics & Commercial Trust', short: 'FLCT', type: 'REIT', sector: 'REIT - Logistics & Commercial', category: 'Dividend', currency: 'SGD' },
   { ticker: 'ACV.SI', name: 'Frasers Hospitality Trust', short: 'FHT', type: 'REIT', sector: 'REIT - Hospitality', category: 'Dividend', currency: 'SGD' },
 
-  // ====================== REITS - KEPPEL ======================
+  // ====================== REITS - KEPPEL GROUP ======================
   { ticker: 'K71U.SI', name: 'Keppel REIT', short: 'KREIT', type: 'REIT', sector: 'REIT - Office', category: 'Dividend', currency: 'SGD' },
   { ticker: 'AJBU.SI', name: 'Keppel DC REIT', short: 'KDC REIT', type: 'REIT', sector: 'REIT - Data Centre', category: 'Dividend', currency: 'SGD' },
   { ticker: 'CMOU.SI', name: 'Keppel Pacific Oak US REIT', short: 'KORE', type: 'REIT', sector: 'REIT - Office (US)', category: 'Dividend', currency: 'USD' },
@@ -2806,7 +2873,6 @@ const SGX_DATABASE = [
   { ticker: 'Q5T.SI', name: 'Far East Hospitality Trust', short: 'Far East H-Trust', type: 'REIT', sector: 'REIT - Hospitality', category: 'Dividend', currency: 'SGD' },
   { ticker: 'J85.SI', name: 'CDL Hospitality Trusts', short: 'CDL H-Trust', type: 'REIT', sector: 'REIT - Hospitality', category: 'Dividend', currency: 'SGD' },
   { ticker: 'O5RU.SI', name: 'AIMS APAC REIT', short: 'AAREIT', type: 'REIT', sector: 'REIT - Industrial', category: 'Dividend', currency: 'SGD' },
-  { ticker: 'M1GU.SI', name: 'Sabana Industrial REIT', short: 'Sabana REIT', type: 'REIT', sector: 'REIT - Industrial', category: 'Dividend', currency: 'SGD' },
   { ticker: 'J91U.SI', name: 'ESR-LOGOS REIT', short: 'ESR-LOGOS', type: 'REIT', sector: 'REIT - Industrial / Logistics', category: 'Dividend', currency: 'SGD' },
   { ticker: 'AW9U.SI', name: 'First REIT', short: 'First REIT', type: 'REIT', sector: 'REIT - Healthcare', category: 'Dividend', currency: 'SGD' },
   { ticker: 'UD1U.SI', name: 'IREIT Global', short: 'IREIT Global', type: 'REIT', sector: 'REIT - Office (Europe)', category: 'Dividend', currency: 'SGD' },
@@ -2818,6 +2884,13 @@ const SGX_DATABASE = [
   { ticker: 'BMGU.SI', name: 'BHG Retail REIT', short: 'BHG Retail', type: 'REIT', sector: 'REIT - Retail (China)', category: 'Dividend', currency: 'SGD' },
   { ticker: 'SK6U.SI', name: 'Paragon REIT', short: 'Paragon REIT', type: 'REIT', sector: 'REIT - Retail', category: 'Dividend', currency: 'SGD' },
   { ticker: 'CRPU.SI', name: 'Sasseur REIT', short: 'Sasseur REIT', type: 'REIT', sector: 'REIT - Retail (China Outlets)', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'RW0U.SI', name: 'Manulife US REIT', short: 'Manulife US REIT', type: 'REIT', sector: 'REIT - Office (US)', category: 'Dividend', currency: 'USD' },
+  { ticker: 'CQTU.SI', name: 'Cromwell European REIT', short: 'Cromwell Eur REIT', type: 'REIT', sector: 'REIT - Diversified (Europe)', category: 'Dividend', currency: 'EUR' },
+  { ticker: 'SV3U.SI', name: 'ARA US Hospitality Trust', short: 'ARA US Hospitality', type: 'REIT', sector: 'REIT - Hospitality (US)', category: 'Dividend', currency: 'USD' },
+  { ticker: 'BTU.SI', name: 'Lippo Malls Indonesia Retail Trust', short: 'LMIRT', type: 'REIT', sector: 'REIT - Retail (Indonesia)', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'XZL.SI', name: 'iREIT Global', short: 'iREIT Global', type: 'REIT', sector: 'REIT - Office (Europe)', category: 'Dividend', currency: 'EUR' },
+  { ticker: 'LREIT.SI', name: 'Lendlease Global Commercial REIT', short: 'LREIT', type: 'REIT', sector: 'REIT - Retail / Office', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'MUST.SI', name: 'Manulife US REIT', short: 'MUST', type: 'REIT', sector: 'REIT - Office (US)', category: 'Dividend', currency: 'USD' },
 
   // ====================== ETFS ======================
   { ticker: 'ES3.SI', name: 'SPDR Straits Times Index ETF', short: 'STI ETF (SPDR)', type: 'ETF', sector: 'ETF - SG Equities', category: 'Dividend', currency: 'SGD' },
@@ -2839,6 +2912,11 @@ const SGX_DATABASE = [
   { ticker: 'P5P.SI', name: 'Phillip MSCI Singapore ETF', short: 'Phillip MSCI SG', type: 'ETF', sector: 'ETF - SG Equities', category: 'Dividend', currency: 'SGD' },
   { ticker: 'KSM.SI', name: 'NikkoAM-ICBCSG China Bond ETF', short: 'Nikko-ICBC China Bond', type: 'ETF', sector: 'ETF - China Bonds', category: 'Dividend', currency: 'SGD' },
   { ticker: 'QL3.SI', name: 'Lion-Nomura Japan Active ETF', short: 'Lion-Nomura Japan', type: 'ETF', sector: 'ETF - Japan Equities', category: 'Growth', currency: 'JPY' },
+  { ticker: 'ERX.SI', name: 'Lion Global Investors Emerging Market Equity ETF', short: 'Lion EM Equity ETF', type: 'ETF', sector: 'ETF - Emerging Markets', category: 'Growth', currency: 'USD' },
+  { ticker: 'YTY.SI', name: 'UOB United SMM Select Equity ETF', short: 'UOB SMM Select', type: 'ETF', sector: 'ETF - Commodities', category: 'Growth', currency: 'SGD' },
+  { ticker: 'GWEI.SI', name: 'Global X E-Commerce ETF', short: 'Global X E-Comm', type: 'ETF', sector: 'ETF - E-Commerce', category: 'Growth', currency: 'USD' },
+  { ticker: 'QDS.SI', name: 'Nikko AM Shenton Income ETF', short: 'Nikko Shenton Income', type: 'ETF', sector: 'ETF - SG Equities', category: 'Dividend', currency: 'SGD' },
+  { ticker: 'AK8U.SI', name: 'Nikko AM Asia ex Japan REIT ETF', short: 'Nikko Asia ex Japan REIT', type: 'ETF', sector: 'ETF - Asia REITs', category: 'Dividend', currency: 'SGD' },
 ];
 
 /* =====================================================================
@@ -2849,6 +2927,232 @@ const SGX_DATABASE = [
    10-yr average and flag the issue date so the user can fill stepped
    rates at entry time. Maturity = issueDate + 10 years.
    ===================================================================== */
+// =====================================================================
+//  GLOBAL DATABASE — NYSE / NASDAQ / AMS (AEX) / LSE
+//  Yahoo Finance ticker format used for price fetching
+// =====================================================================
+const GLOBAL_DATABASE = [
+  // ── NYSE / NASDAQ — Technology ──────────────────────────────────────
+  { ticker: 'AAPL',   name: 'Apple Inc.',                         short: 'Apple',         exchange: 'NASDAQ', sector: 'Technology',       currency: 'USD' },
+  { ticker: 'MSFT',   name: 'Microsoft Corporation',              short: 'Microsoft',     exchange: 'NASDAQ', sector: 'Technology',       currency: 'USD' },
+  { ticker: 'GOOGL',  name: 'Alphabet Inc. (Class A)',            short: 'Alphabet A',    exchange: 'NASDAQ', sector: 'Technology',       currency: 'USD' },
+  { ticker: 'GOOG',   name: 'Alphabet Inc. (Class C)',            short: 'Alphabet C',    exchange: 'NASDAQ', sector: 'Technology',       currency: 'USD' },
+  { ticker: 'META',   name: 'Meta Platforms Inc.',                short: 'Meta',          exchange: 'NASDAQ', sector: 'Technology',       currency: 'USD' },
+  { ticker: 'AMZN',   name: 'Amazon.com Inc.',                    short: 'Amazon',        exchange: 'NASDAQ', sector: 'Consumer',         currency: 'USD' },
+  { ticker: 'NVDA',   name: 'NVIDIA Corporation',                 short: 'Nvidia',        exchange: 'NASDAQ', sector: 'Technology',       currency: 'USD' },
+  { ticker: 'TSLA',   name: 'Tesla Inc.',                         short: 'Tesla',         exchange: 'NASDAQ', sector: 'Consumer',         currency: 'USD' },
+  { ticker: 'AVGO',   name: 'Broadcom Inc.',                      short: 'Broadcom',      exchange: 'NASDAQ', sector: 'Technology',       currency: 'USD' },
+  { ticker: 'ORCL',   name: 'Oracle Corporation',                 short: 'Oracle',        exchange: 'NYSE',   sector: 'Technology',       currency: 'USD' },
+  { ticker: 'CRM',    name: 'Salesforce Inc.',                    short: 'Salesforce',    exchange: 'NYSE',   sector: 'Technology',       currency: 'USD' },
+  { ticker: 'WDAY',   name: 'Workday Inc.',                       short: 'Workday',       exchange: 'NASDAQ', sector: 'Technology',       currency: 'USD' },
+  { ticker: 'NOW',    name: 'ServiceNow Inc.',                    short: 'ServiceNow',    exchange: 'NYSE',   sector: 'Technology',       currency: 'USD' },
+  { ticker: 'ADBE',   name: 'Adobe Inc.',                         short: 'Adobe',         exchange: 'NASDAQ', sector: 'Technology',       currency: 'USD' },
+  { ticker: 'INTU',   name: 'Intuit Inc.',                        short: 'Intuit',        exchange: 'NASDAQ', sector: 'Technology',       currency: 'USD' },
+  { ticker: 'PLTR',   name: 'Palantir Technologies Inc.',         short: 'Palantir',      exchange: 'NYSE',   sector: 'Technology',       currency: 'USD' },
+  { ticker: 'SNOW',   name: 'Snowflake Inc.',                     short: 'Snowflake',     exchange: 'NYSE',   sector: 'Technology',       currency: 'USD' },
+  { ticker: 'MSTR',   name: 'MicroStrategy Inc.',                 short: 'MicroStrategy', exchange: 'NASDAQ', sector: 'Technology',       currency: 'USD' },
+  { ticker: 'COIN',   name: 'Coinbase Global Inc.',               short: 'Coinbase',      exchange: 'NASDAQ', sector: 'Fintech',          currency: 'USD' },
+  { ticker: 'SQ',     name: 'Block Inc.',                         short: 'Block',         exchange: 'NYSE',   sector: 'Fintech',          currency: 'USD' },
+  { ticker: 'PYPL',   name: 'PayPal Holdings Inc.',               short: 'PayPal',        exchange: 'NASDAQ', sector: 'Fintech',          currency: 'USD' },
+  { ticker: 'NET',    name: 'Cloudflare Inc.',                    short: 'Cloudflare',    exchange: 'NYSE',   sector: 'Technology',       currency: 'USD' },
+  { ticker: 'DDOG',   name: 'Datadog Inc.',                       short: 'Datadog',       exchange: 'NASDAQ', sector: 'Technology',       currency: 'USD' },
+  { ticker: 'MDB',    name: 'MongoDB Inc.',                       short: 'MongoDB',       exchange: 'NASDAQ', sector: 'Technology',       currency: 'USD' },
+  { ticker: 'CRWD',   name: 'CrowdStrike Holdings Inc.',          short: 'CrowdStrike',   exchange: 'NASDAQ', sector: 'Technology',       currency: 'USD' },
+  { ticker: 'ZS',     name: 'Zscaler Inc.',                       short: 'Zscaler',       exchange: 'NASDAQ', sector: 'Technology',       currency: 'USD' },
+  { ticker: 'PANW',   name: 'Palo Alto Networks Inc.',            short: 'Palo Alto',     exchange: 'NASDAQ', sector: 'Technology',       currency: 'USD' },
+  { ticker: 'FTNT',   name: 'Fortinet Inc.',                      short: 'Fortinet',      exchange: 'NASDAQ', sector: 'Technology',       currency: 'USD' },
+  { ticker: 'ANET',   name: 'Arista Networks Inc.',               short: 'Arista',        exchange: 'NYSE',   sector: 'Technology',       currency: 'USD' },
+  { ticker: 'APP',    name: 'Applovin Corporation',               short: 'AppLovin',      exchange: 'NASDAQ', sector: 'Technology',       currency: 'USD' },
+  { ticker: 'TTD',    name: 'The Trade Desk Inc.',                short: 'Trade Desk',    exchange: 'NASDAQ', sector: 'Technology',       currency: 'USD' },
+  { ticker: 'RBLX',   name: 'Roblox Corporation',                 short: 'Roblox',        exchange: 'NYSE',   sector: 'Technology',       currency: 'USD' },
+  { ticker: 'U',      name: 'Unity Software Inc.',                short: 'Unity',         exchange: 'NYSE',   sector: 'Technology',       currency: 'USD' },
+  { ticker: 'AI',     name: 'C3.ai Inc.',                         short: 'C3.ai',         exchange: 'NYSE',   sector: 'Technology',       currency: 'USD' },
+  { ticker: 'SMAR',   name: 'Smartsheet Inc.',                    short: 'Smartsheet',    exchange: 'NYSE',   sector: 'Technology',       currency: 'USD' },
+  { ticker: 'TWLO',   name: 'Twilio Inc.',                        short: 'Twilio',        exchange: 'NYSE',   sector: 'Technology',       currency: 'USD' },
+  { ticker: 'ZM',     name: 'Zoom Video Communications Inc.',     short: 'Zoom',          exchange: 'NASDAQ', sector: 'Technology',       currency: 'USD' },
+  { ticker: 'DOCU',   name: 'DocuSign Inc.',                      short: 'DocuSign',      exchange: 'NASDAQ', sector: 'Technology',       currency: 'USD' },
+  { ticker: 'BOX',    name: 'Box Inc.',                           short: 'Box',           exchange: 'NYSE',   sector: 'Technology',       currency: 'USD' },
+  { ticker: 'DBX',    name: 'Dropbox Inc.',                       short: 'Dropbox',       exchange: 'NASDAQ', sector: 'Technology',       currency: 'USD' },
+
+  // ── NYSE / NASDAQ — Semiconductors ──────────────────────────────────
+  { ticker: 'AMD',    name: 'Advanced Micro Devices Inc.',        short: 'AMD',           exchange: 'NASDAQ', sector: 'Semiconductors',   currency: 'USD' },
+  { ticker: 'INTC',   name: 'Intel Corporation',                  short: 'Intel',         exchange: 'NASDAQ', sector: 'Semiconductors',   currency: 'USD' },
+  { ticker: 'QCOM',   name: 'Qualcomm Inc.',                      short: 'Qualcomm',      exchange: 'NASDAQ', sector: 'Semiconductors',   currency: 'USD' },
+  { ticker: 'AMAT',   name: 'Applied Materials Inc.',             short: 'Applied Matls', exchange: 'NASDAQ', sector: 'Semiconductors',   currency: 'USD' },
+  { ticker: 'LRCX',   name: 'Lam Research Corporation',           short: 'Lam Research',  exchange: 'NASDAQ', sector: 'Semiconductors',   currency: 'USD' },
+  { ticker: 'KLAC',   name: 'KLA Corporation',                    short: 'KLA',           exchange: 'NASDAQ', sector: 'Semiconductors',   currency: 'USD' },
+  { ticker: 'MRVL',   name: 'Marvell Technology Inc.',            short: 'Marvell',       exchange: 'NASDAQ', sector: 'Semiconductors',   currency: 'USD' },
+  { ticker: 'MU',     name: 'Micron Technology Inc.',             short: 'Micron',        exchange: 'NASDAQ', sector: 'Semiconductors',   currency: 'USD' },
+  { ticker: 'TXN',    name: 'Texas Instruments Inc.',             short: 'Texas Instr',   exchange: 'NASDAQ', sector: 'Semiconductors',   currency: 'USD' },
+  { ticker: 'ASML',   name: 'ASML Holding NV (US ADR)',           short: 'ASML',          exchange: 'NASDAQ', sector: 'Semiconductors',   currency: 'USD' },
+  { ticker: 'TSM',    name: 'Taiwan Semiconductor (US ADR)',      short: 'TSMC',          exchange: 'NYSE',   sector: 'Semiconductors',   currency: 'USD' },
+  { ticker: 'SMCI',   name: 'Super Micro Computer Inc.',          short: 'Super Micro',   exchange: 'NASDAQ', sector: 'Semiconductors',   currency: 'USD' },
+
+  // ── NYSE / NASDAQ — Finance & Banking ───────────────────────────────
+  { ticker: 'JPM',    name: 'JPMorgan Chase & Co.',               short: 'JPMorgan',      exchange: 'NYSE',   sector: 'Banking',          currency: 'USD' },
+  { ticker: 'BAC',    name: 'Bank of America Corp.',              short: 'BofA',          exchange: 'NYSE',   sector: 'Banking',          currency: 'USD' },
+  { ticker: 'WFC',    name: 'Wells Fargo & Company',              short: 'Wells Fargo',   exchange: 'NYSE',   sector: 'Banking',          currency: 'USD' },
+  { ticker: 'GS',     name: 'The Goldman Sachs Group Inc.',       short: 'Goldman Sachs', exchange: 'NYSE',   sector: 'Banking',          currency: 'USD' },
+  { ticker: 'MS',     name: 'Morgan Stanley',                     short: 'Morgan Stanley',exchange: 'NYSE',   sector: 'Banking',          currency: 'USD' },
+  { ticker: 'C',      name: 'Citigroup Inc.',                     short: 'Citigroup',     exchange: 'NYSE',   sector: 'Banking',          currency: 'USD' },
+  { ticker: 'V',      name: 'Visa Inc.',                          short: 'Visa',          exchange: 'NYSE',   sector: 'Financial Services',currency: 'USD' },
+  { ticker: 'MA',     name: 'Mastercard Inc.',                    short: 'Mastercard',    exchange: 'NYSE',   sector: 'Financial Services',currency: 'USD' },
+  { ticker: 'AXP',    name: 'American Express Company',           short: 'Amex',          exchange: 'NYSE',   sector: 'Financial Services',currency: 'USD' },
+  { ticker: 'BRK-B',  name: 'Berkshire Hathaway Inc. (Class B)', short: 'Berkshire B',   exchange: 'NYSE',   sector: 'Conglomerate',     currency: 'USD' },
+  { ticker: 'BX',     name: 'Blackstone Inc.',                    short: 'Blackstone',    exchange: 'NYSE',   sector: 'Financial Services',currency: 'USD' },
+  { ticker: 'KKR',    name: 'KKR & Co. Inc.',                     short: 'KKR',           exchange: 'NYSE',   sector: 'Financial Services',currency: 'USD' },
+  { ticker: 'SPGI',   name: 'S&P Global Inc.',                    short: 'S&P Global',    exchange: 'NYSE',   sector: 'Financial Services',currency: 'USD' },
+  { ticker: 'ICE',    name: 'Intercontinental Exchange Inc.',     short: 'ICE',           exchange: 'NYSE',   sector: 'Financial Services',currency: 'USD' },
+  { ticker: 'CME',    name: 'CME Group Inc.',                     short: 'CME Group',     exchange: 'NASDAQ', sector: 'Financial Services',currency: 'USD' },
+  { ticker: 'IBKR',   name: 'Interactive Brokers Group Inc.',     short: 'Interactive Bkrs',exchange: 'NASDAQ',sector: 'Financial Services',currency: 'USD' },
+  { ticker: 'HOOD',   name: 'Robinhood Markets Inc.',             short: 'Robinhood',     exchange: 'NASDAQ', sector: 'Fintech',          currency: 'USD' },
+
+  // ── NYSE / NASDAQ — Healthcare & Pharma ─────────────────────────────
+  { ticker: 'UNH',    name: 'UnitedHealth Group Inc.',            short: 'UnitedHealth',  exchange: 'NYSE',   sector: 'Healthcare',       currency: 'USD' },
+  { ticker: 'JNJ',    name: 'Johnson & Johnson',                  short: 'J&J',           exchange: 'NYSE',   sector: 'Healthcare',       currency: 'USD' },
+  { ticker: 'PFE',    name: 'Pfizer Inc.',                        short: 'Pfizer',        exchange: 'NYSE',   sector: 'Pharma',           currency: 'USD' },
+  { ticker: 'MRK',    name: 'Merck & Co. Inc.',                   short: 'Merck',         exchange: 'NYSE',   sector: 'Pharma',           currency: 'USD' },
+  { ticker: 'ABBV',   name: 'AbbVie Inc.',                        short: 'AbbVie',        exchange: 'NYSE',   sector: 'Pharma',           currency: 'USD' },
+  { ticker: 'LLY',    name: 'Eli Lilly and Company',              short: 'Eli Lilly',     exchange: 'NYSE',   sector: 'Pharma',           currency: 'USD' },
+  { ticker: 'AMGN',   name: 'Amgen Inc.',                         short: 'Amgen',         exchange: 'NASDAQ', sector: 'Biotech',          currency: 'USD' },
+  { ticker: 'BIIB',   name: 'Biogen Inc.',                        short: 'Biogen',        exchange: 'NASDAQ', sector: 'Biotech',          currency: 'USD' },
+  { ticker: 'GILD',   name: 'Gilead Sciences Inc.',               short: 'Gilead',        exchange: 'NASDAQ', sector: 'Biotech',          currency: 'USD' },
+  { ticker: 'REGN',   name: 'Regeneron Pharmaceuticals Inc.',     short: 'Regeneron',     exchange: 'NASDAQ', sector: 'Biotech',          currency: 'USD' },
+  { ticker: 'MRNA',   name: 'Moderna Inc.',                       short: 'Moderna',       exchange: 'NASDAQ', sector: 'Biotech',          currency: 'USD' },
+
+  // ── NYSE / NASDAQ — Consumer & Retail ───────────────────────────────
+  { ticker: 'WMT',    name: 'Walmart Inc.',                       short: 'Walmart',       exchange: 'NYSE',   sector: 'Consumer',         currency: 'USD' },
+  { ticker: 'COST',   name: 'Costco Wholesale Corporation',       short: 'Costco',        exchange: 'NASDAQ', sector: 'Consumer',         currency: 'USD' },
+  { ticker: 'HD',     name: 'The Home Depot Inc.',                short: 'Home Depot',    exchange: 'NYSE',   sector: 'Consumer',         currency: 'USD' },
+  { ticker: 'TGT',    name: 'Target Corporation',                 short: 'Target',        exchange: 'NYSE',   sector: 'Consumer',         currency: 'USD' },
+  { ticker: 'MCD',    name: "McDonald's Corporation",             short: "McDonald's",    exchange: 'NYSE',   sector: 'Consumer',         currency: 'USD' },
+  { ticker: 'SBUX',   name: 'Starbucks Corporation',              short: 'Starbucks',     exchange: 'NASDAQ', sector: 'Consumer',         currency: 'USD' },
+  { ticker: 'NKE',    name: 'Nike Inc.',                          short: 'Nike',          exchange: 'NYSE',   sector: 'Consumer',         currency: 'USD' },
+  { ticker: 'LULU',   name: 'Lululemon Athletica Inc.',           short: 'Lululemon',     exchange: 'NASDAQ', sector: 'Consumer',         currency: 'USD' },
+  { ticker: 'GME',    name: 'GameStop Corp.',                     short: 'GameStop',      exchange: 'NYSE',   sector: 'Consumer',         currency: 'USD' },
+  { ticker: 'AMC',    name: 'AMC Entertainment Holdings Inc.',    short: 'AMC',           exchange: 'NYSE',   sector: 'Entertainment',    currency: 'USD' },
+
+  // ── NYSE / NASDAQ — Energy ───────────────────────────────────────────
+  { ticker: 'XOM',    name: 'Exxon Mobil Corporation',            short: 'ExxonMobil',    exchange: 'NYSE',   sector: 'Energy',           currency: 'USD' },
+  { ticker: 'CVX',    name: 'Chevron Corporation',                short: 'Chevron',       exchange: 'NYSE',   sector: 'Energy',           currency: 'USD' },
+  { ticker: 'COP',    name: 'ConocoPhillips',                     short: 'ConocoPhillips',exchange: 'NYSE',   sector: 'Energy',           currency: 'USD' },
+  { ticker: 'MPC',    name: 'Marathon Petroleum Corporation',     short: 'Marathon Petro',exchange: 'NYSE',   sector: 'Energy',           currency: 'USD' },
+  { ticker: 'OXY',    name: 'Occidental Petroleum Corporation',   short: 'Occidental',    exchange: 'NYSE',   sector: 'Energy',           currency: 'USD' },
+  { ticker: 'SLB',    name: 'SLB (Schlumberger)',                 short: 'SLB',           exchange: 'NYSE',   sector: 'Energy',           currency: 'USD' },
+
+  // ── NYSE / NASDAQ — Industrials ──────────────────────────────────────
+  { ticker: 'CAT',    name: 'Caterpillar Inc.',                   short: 'Caterpillar',   exchange: 'NYSE',   sector: 'Industrials',      currency: 'USD' },
+  { ticker: 'DE',     name: 'Deere & Company',                    short: 'Deere',         exchange: 'NYSE',   sector: 'Industrials',      currency: 'USD' },
+  { ticker: 'GE',     name: 'GE Aerospace',                       short: 'GE Aerospace',  exchange: 'NYSE',   sector: 'Industrials',      currency: 'USD' },
+  { ticker: 'HON',    name: 'Honeywell International Inc.',       short: 'Honeywell',     exchange: 'NASDAQ', sector: 'Industrials',      currency: 'USD' },
+  { ticker: 'RTX',    name: 'RTX Corporation',                    short: 'RTX',           exchange: 'NYSE',   sector: 'Defence',          currency: 'USD' },
+  { ticker: 'LMT',    name: 'Lockheed Martin Corporation',        short: 'Lockheed',      exchange: 'NYSE',   sector: 'Defence',          currency: 'USD' },
+  { ticker: 'BA',     name: 'The Boeing Company',                 short: 'Boeing',        exchange: 'NYSE',   sector: 'Aerospace',        currency: 'USD' },
+  { ticker: 'UPS',    name: 'United Parcel Service Inc.',         short: 'UPS',           exchange: 'NYSE',   sector: 'Logistics',        currency: 'USD' },
+  { ticker: 'FDX',    name: 'FedEx Corporation',                  short: 'FedEx',         exchange: 'NYSE',   sector: 'Logistics',        currency: 'USD' },
+
+  // ── NYSE / NASDAQ — Electric Vehicles & Clean Energy ────────────────
+  { ticker: 'RIVN',   name: 'Rivian Automotive Inc.',             short: 'Rivian',        exchange: 'NASDAQ', sector: 'Automotive',       currency: 'USD' },
+  { ticker: 'LCID',   name: 'Lucid Group Inc.',                   short: 'Lucid',         exchange: 'NASDAQ', sector: 'Automotive',       currency: 'USD' },
+  { ticker: 'CHPT',   name: 'ChargePoint Holdings Inc.',          short: 'ChargePoint',   exchange: 'NYSE',   sector: 'EV Infrastructure', currency: 'USD' },
+  { ticker: 'SPCE',   name: 'Virgin Galactic Holdings Inc.',      short: 'Virgin Galactic',exchange: 'NYSE',  sector: 'Aerospace',        currency: 'USD' },
+  { ticker: 'ASTR',   name: 'Astra Space Inc.',                   short: 'Astra Space',   exchange: 'NASDAQ', sector: 'Aerospace',        currency: 'USD' },
+  { ticker: 'ENPH',   name: 'Enphase Energy Inc.',                short: 'Enphase',       exchange: 'NASDAQ', sector: 'Clean Energy',     currency: 'USD' },
+  { ticker: 'FSLR',   name: 'First Solar Inc.',                   short: 'First Solar',   exchange: 'NASDAQ', sector: 'Clean Energy',     currency: 'USD' },
+  { ticker: 'NEE',    name: 'NextEra Energy Inc.',                short: 'NextEra',       exchange: 'NYSE',   sector: 'Utilities',        currency: 'USD' },
+
+  // ── NYSE / NASDAQ — Media & Entertainment ───────────────────────────
+  { ticker: 'NFLX',   name: 'Netflix Inc.',                       short: 'Netflix',       exchange: 'NASDAQ', sector: 'Entertainment',    currency: 'USD' },
+  { ticker: 'DIS',    name: 'The Walt Disney Company',            short: 'Disney',        exchange: 'NYSE',   sector: 'Entertainment',    currency: 'USD' },
+  { ticker: 'PARA',   name: 'Paramount Global',                   short: 'Paramount',     exchange: 'NASDAQ', sector: 'Media',            currency: 'USD' },
+  { ticker: 'WBD',    name: 'Warner Bros. Discovery Inc.',        short: 'Warner Bros',   exchange: 'NASDAQ', sector: 'Media',            currency: 'USD' },
+  { ticker: 'SPOT',   name: 'Spotify Technology S.A.',            short: 'Spotify',       exchange: 'NYSE',   sector: 'Entertainment',    currency: 'USD' },
+  { ticker: 'TME',    name: 'Tencent Music Entertainment (ADR)', short: 'Tencent Music', exchange: 'NYSE',   sector: 'Entertainment',    currency: 'USD' },
+
+  // ── NYSE / NASDAQ — Chinese ADRs ────────────────────────────────────
+  { ticker: 'BABA',   name: 'Alibaba Group Holding Ltd (ADR)',    short: 'Alibaba',       exchange: 'NYSE',   sector: 'Consumer',         currency: 'USD' },
+  { ticker: 'JD',     name: 'JD.com Inc. (ADR)',                  short: 'JD.com',        exchange: 'NASDAQ', sector: 'Consumer',         currency: 'USD' },
+  { ticker: 'PDD',    name: 'PDD Holdings Inc. (ADR)',            short: 'PDD / Pinduoduo',exchange: 'NASDAQ',sector: 'Consumer',         currency: 'USD' },
+  { ticker: 'BIDU',   name: 'Baidu Inc. (ADR)',                   short: 'Baidu',         exchange: 'NASDAQ', sector: 'Technology',       currency: 'USD' },
+  { ticker: 'NIO',    name: 'NIO Inc. (ADR)',                     short: 'NIO',           exchange: 'NYSE',   sector: 'Automotive',       currency: 'USD' },
+  { ticker: 'DIDI',   name: 'DiDi Global Inc. (ADR)',             short: 'DiDi',          exchange: 'NYSE',   sector: 'Transport',        currency: 'USD' },
+  { ticker: 'TME',    name: 'Tencent Music Entertainment (ADR)', short: 'Tencent Music', exchange: 'NYSE',   sector: 'Entertainment',    currency: 'USD' },
+
+  // ── NYSE / NASDAQ — SPACs & Special Situations ──────────────────────
+  { ticker: 'PSTH',   name: 'Pershing Square Tontine Holdings',   short: 'PSTH SPAC',     exchange: 'NYSE',   sector: 'SPAC',             currency: 'USD' },
+  { ticker: 'BTWN',   name: 'Bridgetown Holdings Ltd',            short: 'Bridgetown',    exchange: 'NASDAQ', sector: 'SPAC',             currency: 'USD' },
+  { ticker: 'RKT',    name: 'Rocket Companies Inc.',              short: 'Rocket Cos',    exchange: 'NYSE',   sector: 'Financial Services',currency: 'USD' },
+
+  // ── NYSE / NASDAQ — REITs ────────────────────────────────────────────
+  { ticker: 'AMT',    name: 'American Tower Corporation',         short: 'American Tower',exchange: 'NYSE',   sector: 'REIT - Infrastructure',currency: 'USD' },
+  { ticker: 'PLD',    name: 'Prologis Inc.',                      short: 'Prologis',      exchange: 'NYSE',   sector: 'REIT - Logistics', currency: 'USD' },
+  { ticker: 'EQIX',   name: 'Equinix Inc.',                       short: 'Equinix',       exchange: 'NASDAQ', sector: 'REIT - Data Centre',currency: 'USD' },
+  { ticker: 'O',      name: 'Realty Income Corporation',          short: 'Realty Income', exchange: 'NYSE',   sector: 'REIT - Retail',    currency: 'USD' },
+  { ticker: 'VNQ',    name: 'Vanguard Real Estate ETF',           short: 'Vanguard RE ETF',exchange: 'NYSE',  sector: 'ETF - REITs',      currency: 'USD' },
+
+  // ── NYSE / NASDAQ — Commodities & Metals ────────────────────────────
+  { ticker: 'GLD',    name: 'SPDR Gold Shares ETF',               short: 'SPDR Gold',     exchange: 'NYSE',   sector: 'ETF - Gold',       currency: 'USD' },
+  { ticker: 'SLV',    name: 'iShares Silver Trust',               short: 'iShares Silver',exchange: 'NYSE',   sector: 'ETF - Silver',     currency: 'USD' },
+  { ticker: 'GOLD',   name: 'Barrick Gold Corporation',           short: 'Barrick Gold',  exchange: 'NYSE',   sector: 'Mining',           currency: 'USD' },
+  { ticker: 'FCX',    name: 'Freeport-McMoRan Inc.',              short: 'Freeport',      exchange: 'NYSE',   sector: 'Mining',           currency: 'USD' },
+
+  // ── NYSE / NASDAQ — ETFs ─────────────────────────────────────────────
+  { ticker: 'SPY',    name: 'SPDR S&P 500 ETF Trust',             short: 'SPY',           exchange: 'NYSE',   sector: 'ETF - US Equities',currency: 'USD' },
+  { ticker: 'QQQ',    name: 'Invesco QQQ Trust',                  short: 'QQQ',           exchange: 'NASDAQ', sector: 'ETF - US Tech',    currency: 'USD' },
+  { ticker: 'IWM',    name: 'iShares Russell 2000 ETF',           short: 'Russell 2000',  exchange: 'NYSE',   sector: 'ETF - US Small Cap',currency: 'USD' },
+  { ticker: 'CSPX',   name: 'iShares Core S&P 500 UCITS ETF',    short: 'iShares S&P500',exchange: 'NASDAQ', sector: 'ETF - US Equities',currency: 'USD' },
+  { ticker: 'VT',     name: 'Vanguard Total World Stock ETF',     short: 'Vanguard World',exchange: 'NYSE',   sector: 'ETF - Global',     currency: 'USD' },
+  { ticker: 'VTI',    name: 'Vanguard Total Stock Market ETF',    short: 'Vanguard US',   exchange: 'NYSE',   sector: 'ETF - US Equities',currency: 'USD' },
+  { ticker: 'ARKK',   name: 'ARK Innovation ETF',                 short: 'ARK Innovation',exchange: 'NYSE',   sector: 'ETF - Innovation', currency: 'USD' },
+  { ticker: 'SOXS',   name: 'Direxion Daily Semi Bear 3X ETF',    short: 'SOXS',          exchange: 'NYSE',   sector: 'ETF - Leveraged',  currency: 'USD' },
+  { ticker: 'TQQQ',   name: 'ProShares UltraPro QQQ',             short: 'TQQQ',          exchange: 'NASDAQ', sector: 'ETF - Leveraged',  currency: 'USD' },
+
+  // ── NYSE / NASDAQ — Consumer Staples & Pharma  ──────────────────────
+  { ticker: 'KO',     name: 'The Coca-Cola Company',              short: 'Coca-Cola',     exchange: 'NYSE',   sector: 'Consumer Staples', currency: 'USD' },
+  { ticker: 'PEP',    name: 'PepsiCo Inc.',                       short: 'PepsiCo',       exchange: 'NASDAQ', sector: 'Consumer Staples', currency: 'USD' },
+  { ticker: 'PG',     name: 'Procter & Gamble Co.',               short: 'P&G',           exchange: 'NYSE',   sector: 'Consumer Staples', currency: 'USD' },
+  { ticker: 'PM',     name: 'Philip Morris International Inc.',   short: 'Philip Morris', exchange: 'NYSE',   sector: 'Consumer Staples', currency: 'USD' },
+  { ticker: 'MO',     name: 'Altria Group Inc.',                  short: 'Altria',        exchange: 'NYSE',   sector: 'Consumer Staples', currency: 'USD' },
+  { ticker: 'CVS',    name: 'CVS Health Corporation',             short: 'CVS Health',    exchange: 'NYSE',   sector: 'Healthcare',       currency: 'USD' },
+
+  // ── AMS (Euronext Amsterdam / AEX) ───────────────────────────────────
+  { ticker: 'PRX.AS',  name: 'Prosus NV',                         short: 'Prosus',        exchange: 'AMS',    sector: 'Technology',       currency: 'EUR' },
+  { ticker: 'ASML.AS', name: 'ASML Holding NV',                   short: 'ASML',          exchange: 'AMS',    sector: 'Semiconductors',   currency: 'EUR' },
+  { ticker: 'HEIA.AS', name: 'Heineken NV',                       short: 'Heineken',      exchange: 'AMS',    sector: 'Consumer',         currency: 'EUR' },
+  { ticker: 'PHIA.AS', name: 'Koninklijke Philips NV',            short: 'Philips',       exchange: 'AMS',    sector: 'Healthcare',       currency: 'EUR' },
+  { ticker: 'INGA.AS', name: 'ING Groep NV',                      short: 'ING',           exchange: 'AMS',    sector: 'Banking',          currency: 'EUR' },
+  { ticker: 'SHELL.AS',name: 'Shell PLC',                         short: 'Shell',         exchange: 'AMS',    sector: 'Energy',           currency: 'EUR' },
+  { ticker: 'UNA.AS',  name: 'Unilever PLC',                      short: 'Unilever',      exchange: 'AMS',    sector: 'Consumer Staples', currency: 'EUR' },
+  { ticker: 'AD.AS',   name: 'Ahold Delhaize',                    short: 'Ahold Delhaize',exchange: 'AMS',    sector: 'Consumer',         currency: 'EUR' },
+  { ticker: 'ADYEN.AS',name: 'Adyen NV',                          short: 'Adyen',         exchange: 'AMS',    sector: 'Fintech',          currency: 'EUR' },
+  { ticker: 'ABN.AS',  name: 'ABN AMRO Bank NV',                  short: 'ABN AMRO',      exchange: 'AMS',    sector: 'Banking',          currency: 'EUR' },
+  { ticker: 'NN.AS',   name: 'NN Group NV',                       short: 'NN Group',      exchange: 'AMS',    sector: 'Insurance',        currency: 'EUR' },
+  { ticker: 'WKL.AS',  name: 'Wolters Kluwer NV',                 short: 'Wolters Kluwer',exchange: 'AMS',    sector: 'Technology',       currency: 'EUR' },
+  { ticker: 'MT.AS',   name: 'ArcelorMittal SA',                  short: 'ArcelorMittal', exchange: 'AMS',    sector: 'Materials',        currency: 'EUR' },
+  { ticker: 'DSFIR.AS',name: 'DSM-Firmenich AG',                  short: 'DSM-Firmenich', exchange: 'AMS',    sector: 'Materials',        currency: 'EUR' },
+
+  // ── LSE (London Stock Exchange) ───────────────────────────────────────
+  { ticker: 'SHEL.L',  name: 'Shell PLC',                         short: 'Shell (LSE)',   exchange: 'LSE',    sector: 'Energy',           currency: 'GBP' },
+  { ticker: 'AZN.L',   name: 'AstraZeneca PLC',                   short: 'AstraZeneca',   exchange: 'LSE',    sector: 'Pharma',           currency: 'GBP' },
+  { ticker: 'ULVR.L',  name: 'Unilever PLC',                      short: 'Unilever (LSE)',exchange: 'LSE',    sector: 'Consumer Staples', currency: 'GBP' },
+  { ticker: 'HSBA.L',  name: 'HSBC Holdings PLC',                 short: 'HSBC',          exchange: 'LSE',    sector: 'Banking',          currency: 'GBP' },
+  { ticker: 'BP.L',    name: 'BP PLC',                            short: 'BP',            exchange: 'LSE',    sector: 'Energy',           currency: 'GBP' },
+  { ticker: 'GSK.L',   name: 'GSK PLC',                           short: 'GSK',           exchange: 'LSE',    sector: 'Pharma',           currency: 'GBP' },
+  { ticker: 'RIO.L',   name: 'Rio Tinto PLC',                     short: 'Rio Tinto',     exchange: 'LSE',    sector: 'Mining',           currency: 'GBP' },
+  { ticker: 'BHP.L',   name: 'BHP Group PLC',                     short: 'BHP',           exchange: 'LSE',    sector: 'Mining',           currency: 'GBP' },
+  { ticker: 'VOD.L',   name: 'Vodafone Group PLC',                short: 'Vodafone',      exchange: 'LSE',    sector: 'Telecom',          currency: 'GBP' },
+  { ticker: 'BATS.L',  name: 'British American Tobacco PLC',      short: 'BAT',           exchange: 'LSE',    sector: 'Consumer Staples', currency: 'GBP' },
+  { ticker: 'LSEG.L',  name: 'London Stock Exchange Group PLC',   short: 'LSEG',          exchange: 'LSE',    sector: 'Financial Services',currency: 'GBP' },
+  { ticker: 'LLOY.L',  name: 'Lloyds Banking Group PLC',          short: 'Lloyds',        exchange: 'LSE',    sector: 'Banking',          currency: 'GBP' },
+  { ticker: 'BARC.L',  name: 'Barclays PLC',                      short: 'Barclays',      exchange: 'LSE',    sector: 'Banking',          currency: 'GBP' },
+  { ticker: 'NWG.L',   name: 'NatWest Group PLC',                 short: 'NatWest',       exchange: 'LSE',    sector: 'Banking',          currency: 'GBP' },
+  { ticker: 'STAN.L',  name: 'Standard Chartered PLC',            short: 'StanChart',     exchange: 'LSE',    sector: 'Banking',          currency: 'GBP' },
+  { ticker: 'EXPN.L',  name: 'Experian PLC',                      short: 'Experian',      exchange: 'LSE',    sector: 'Financial Services',currency: 'GBP' },
+  { ticker: 'RR.L',    name: 'Rolls-Royce Holdings PLC',          short: 'Rolls-Royce',   exchange: 'LSE',    sector: 'Aerospace',        currency: 'GBP' },
+  { ticker: 'IAG.L',   name: 'International Airlines Group',      short: 'IAG',           exchange: 'LSE',    sector: 'Aviation',         currency: 'GBP' },
+  { ticker: 'CSPX.L',  name: 'iShares Core S&P 500 UCITS ETF',   short: 'iShares S&P500',exchange: 'LSE',    sector: 'ETF - US Equities',currency: 'USD' },
+];
+
 const SSB_DATABASE = [
   { code: 'SBAUG22', fullCode: 'GX22080V', name: 'SSB Aug 2022', type: 'SSB', issueDate: '2022-08-01', maturityDate: '2032-08-01', avgRate: 3.00, firstCoupon: '2023-02-01' },
   { code: 'SBNOV22', fullCode: 'GX22110A', name: 'SSB Nov 2022', type: 'SSB', issueDate: '2022-11-01', maturityDate: '2032-11-01', avgRate: 3.21, firstCoupon: '2023-05-01' },
@@ -2923,6 +3227,18 @@ function rebuildIndex() {
       currency: x.currency,
       raw: x,
     })),
+    ...GLOBAL_DATABASE.map(x => ({
+      kind: 'global',
+      type: 'Stock',
+      code: x.ticker,
+      name: x.name,
+      short: x.short,
+      sector: `${x.exchange} · ${x.sector}`,
+      category: 'Growth',
+      currency: x.currency,
+      exchange: x.exchange,
+      raw: x,
+    })),
     ...SSB_DATABASE.map(x => ({
       kind: 'ssb',
       type: 'SSB',
@@ -2967,6 +3283,7 @@ const PROXY_URLS = [
   url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
   url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
   url => `https://thingproxy.freeboard.io/fetch/${url}`,
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}&nocache=${Date.now()}`,
 ];
 
 const state = {
@@ -4414,6 +4731,7 @@ function switchTab(panel) {
   );
   if (panel === 'dividends') { renderDividends(false); populateDivAddForm(); }
   if (panel === 'cashflow') renderCashflow();
+  if (panel === 'global') renderGlobal();
   if (panel === 'sold') renderSold();
   if (panel === 'add') renderTransactions();
 }
@@ -5618,99 +5936,520 @@ function renderCashflowYearSummary(sorted) {
 /* =====================================================================
    STEP 2 — SOLD
    ===================================================================== */
-function renderSold() {
-  const allCodes = [...new Set(state.transactions.filter(t => ['Stock','REIT','ETF'].includes(t.type)).map(t => t.code))];
-  const sold = [];
-  for (const code of allCodes) {
-    const txs = state.transactions.filter(t => t.code === code).slice().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-    let qty = 0, costBasis = 0, realizedTotal = 0, sellAmount = 0, lastSell = null;
-    let firstBuy = null;
-    for (const tx of txs) {
-      if (tx.kind === 'Buy') {
-        if (!firstBuy) firstBuy = tx.date;
-        qty += tx.quantity || 0;
-        costBasis += (tx.quantity || 0) * (tx.price || 0) + (tx.fees || 0);
-      } else if (tx.kind === 'Sell') {
-        const sellQty = tx.quantity || 0;
-        const proceeds = sellQty * (tx.price || 0) - (tx.fees || 0);
-        const avgCost = qty > 0 ? costBasis / qty : 0;
-        const costSold = avgCost * sellQty;
-        realizedTotal += proceeds - costSold;
-        sellAmount += proceeds;
-        qty -= sellQty;
-        costBasis -= costSold;
-        lastSell = tx;
-        if (qty < 0.0001) { qty = 0; costBasis = 0; }
+/* =====================================================================
+   GLOBAL TAB — NYSE / NASDAQ / AMS / LSE positions + options
+   ===================================================================== */
+
+function computeGlobal() {
+  const txs = state.transactions.filter(t => t.type === 'Global');
+
+  // Build per-stock positions
+  const byCode = {};
+  for (const tx of txs) {
+    if (!byCode[tx.code]) byCode[tx.code] = {
+      code: tx.code, name: tx.name, currency: tx.currency,
+      exchange: tx.exchange || '',
+      qty: 0, totalCost: 0, premiumsCollected: 0, txs: [],
+    };
+    const p = byCode[tx.code];
+    p.txs.push(tx);
+    if (tx.kind === 'Buy' || tx.kind === 'PutAssigned') {
+      p.qty       += tx.quantity || 0;
+      p.totalCost += (tx.quantity || 0) * (tx.price || 0) + (tx.fees || 0);
+    }
+    if (tx.kind === 'Sell' || tx.kind === 'CallAssigned') {
+      p.qty       -= tx.quantity || 0;
+      p.totalCost -= Math.min(p.totalCost, (tx.quantity || 0) * (p.totalCost / Math.max(p.qty + (tx.quantity||0), 1)));
+    }
+    if (tx.kind === 'Premium' || tx.kind === 'PutAssigned' || tx.kind === 'CallAssigned') {
+      p.premiumsCollected += Math.abs(tx.premiumCollected || 0);
+    }
+  }
+
+  // FIFO realised P/L per code
+  const realised = {};
+  for (const code of Object.keys(byCode)) {
+    const codeTxs = txs.filter(t => t.code === code).sort((a, b) => a.date.localeCompare(b.date));
+    let buyQueue = [], realPL = 0;
+    for (const tx of codeTxs) {
+      if (tx.kind === 'Buy' || tx.kind === 'PutAssigned') {
+        const premium = tx.kind === 'PutAssigned' ? (tx.premiumCollected || 0) : 0;
+        const effectiveCost = (tx.price || 0) - premium / Math.max(tx.quantity, 1);
+        buyQueue.push({ qty: tx.quantity || 0, cost: effectiveCost });
+      }
+      if (tx.kind === 'Sell' || tx.kind === 'CallAssigned') {
+        let sellQty = tx.quantity || 0;
+        const optionPremium = tx.kind === 'CallAssigned' ? (tx.premiumCollected || 0) : 0;
+        const salePrice = (tx.price || 0) + optionPremium / Math.max(tx.quantity, 1);
+        while (sellQty > 0 && buyQueue.length > 0) {
+          const lot = buyQueue[0];
+          const used = Math.min(sellQty, lot.qty);
+          realPL += used * (salePrice - lot.cost) - (tx.fees || 0) * (used / (tx.quantity || 1));
+          lot.qty -= used;
+          sellQty -= used;
+          if (lot.qty <= 0) buyQueue.shift();
+        }
       }
     }
-    if (realizedTotal !== 0 || (qty === 0 && lastSell)) {
-      const meta = lookupByCode(code) || {};
-      sold.push({
-        code, name: meta.name || lastSell?.name || code,
-        type: meta.type || lastSell?.type || 'Stock',
-        currency: lastSell?.currency || meta.currency || 'SGD',
-        firstBuy, lastSell: lastSell?.date,
-        proceeds: sellAmount,
-        proceedsSGD: toSGD(sellAmount, lastSell?.currency || 'SGD'),
-        realized: realizedTotal,
-        realizedSGD: toSGD(realizedTotal, lastSell?.currency || 'SGD'),
-        stillHolding: qty > 0,
-        remainingQty: qty,
-      });
-    }
-  }
-  const totalRealized = sold.reduce((a, s) => a + s.realizedSGD, 0);
-  const winners = sold.filter(s => s.realizedSGD > 0).length;
-  const losers = sold.filter(s => s.realizedSGD < 0).length;
-
-  const kpi = document.getElementById('soldKpis');
-  if (kpi) {
-    kpi.innerHTML = `
-      <div class="kpi-card">
-        <div class="kpi-label">Realised P/L (SGD)</div>
-        <div class="kpi-value ${totalRealized >= 0 ? 'stat-positive' : 'stat-negative'}">${totalRealized >= 0 ? '+' : ''}S$${formatNum(totalRealized.toFixed(2))}</div>
-        <div class="kpi-sub">${sold.length} positions with sales</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Winners / Losers</div>
-        <div class="kpi-value">${winners} / ${losers}</div>
-        <div class="kpi-sub">${sold.length > 0 ? Math.round(winners/sold.length*100) : 0}% win rate</div>
-      </div>
-    `;
+    realised[code] = realPL;
   }
 
-  const wrap = document.getElementById('soldTableWrap');
-  if (wrap) {
-    if (sold.length === 0) {
-      wrap.innerHTML = emptyTable('No sales yet', 'Once you record a sell transaction, realised gains and losses will appear here.');
+  // Separate option-premium-only rows
+  const premiums = txs.filter(t => t.kind === 'Premium');
+
+  // All premium events (including those from assigned options)
+  const allPremiums = txs.filter(t => ['Premium','PutAssigned','CallAssigned'].includes(t.kind) && (t.premiumCollected || 0) > 0);
+
+  // Build holdings (qty > 0) and closed (qty ≈ 0)
+  const holdings = [], closed = [];
+  for (const code of Object.keys(byCode)) {
+    const p = byCode[code];
+    const livePrice = state.prices?.[code]?.price ?? null;
+    const fxRate = toSGD(1, p.currency);
+    const effectiveCost = Math.max(0, p.totalCost - p.premiumsCollected);
+    const avgCostEffective = p.qty > 0 ? effectiveCost / p.qty : 0;
+    const avgCostRaw       = p.qty > 0 ? p.totalCost / p.qty : 0;
+    const marketValue      = livePrice != null ? p.qty * livePrice : null;
+    const unrealisedLocal  = livePrice != null ? marketValue - effectiveCost : null;
+    const unrealisedSGD    = unrealisedLocal != null ? unrealisedLocal * fxRate : null;
+    const realisedSGD      = (realised[code] || 0) * fxRate;
+
+    const entry = {
+      ...p,
+      avgCostRaw, avgCostEffective,
+      effectiveCost, marketValue, livePrice,
+      unrealisedLocal, unrealisedSGD, realisedSGD,
+      totalReturnSGD: (unrealisedSGD || 0) + realisedSGD + p.premiumsCollected * fxRate,
+    };
+    if (p.qty > 0.001) holdings.push(entry);
+    else if (p.txs.some(t => t.kind === 'Sell' || t.kind === 'CallAssigned')) closed.push(entry);
+  }
+
+  holdings.sort((a, b) => a.name.localeCompare(b.name));
+  closed.sort((a, b) => b.realisedSGD - a.realisedSGD);
+
+  return { holdings, closed, allPremiums, allTxs: txs };
+}
+
+function renderGlobal() {
+  const g = computeGlobal();
+  const fxUSD = toSGD(1, 'USD');
+  const fxEUR = toSGD(1, 'EUR');
+  const fxGBP = toSGD(1, 'GBP');
+
+  // ── KPIs ─────────────────────────────────────────────────────────────
+  const usdHoldings = g.holdings.filter(p => p.currency === 'USD');
+  const eurHoldings = g.holdings.filter(p => p.currency === 'EUR');
+  const totalPremiums = g.holdings.reduce((a, p) => a + (p.premiumsCollected || 0) * toSGD(1, p.currency), 0)
+                      + g.closed.reduce((a, p) => a + (p.premiumsCollected || 0) * toSGD(1, p.currency), 0);
+  const totalRealisedSGD = g.closed.reduce((a, p) => a + p.realisedSGD, 0);
+  const totalMVusd = usdHoldings.filter(p => p.marketValue != null).reduce((a, p) => a + p.marketValue, 0);
+  const totalMVeur = eurHoldings.filter(p => p.marketValue != null).reduce((a, p) => a + p.marketValue, 0);
+
+  const kpi = document.getElementById('globalKpiRow');
+  if (kpi) kpi.innerHTML = `
+    <div class="kpi-card featured">
+      <div class="kpi-label">USD holdings</div>
+      <div class="kpi-value">US$${formatNum(totalMVusd.toFixed(2))}</div>
+      <div class="kpi-sub">≈ S$${formatNum((totalMVusd * fxUSD).toFixed(0))}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">EUR holdings</div>
+      <div class="kpi-value">€${formatNum(totalMVeur.toFixed(2))}</div>
+      <div class="kpi-sub">≈ S$${formatNum((totalMVeur * fxEUR).toFixed(0))}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Option premiums</div>
+      <div class="kpi-value">S$${formatNum(totalPremiums.toFixed(2))}</div>
+      <div class="kpi-sub">All-time collected</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Realised P/L</div>
+      <div class="kpi-value ${totalRealisedSGD >= 0 ? 'stat-positive' : 'stat-negative'}">${totalRealisedSGD >= 0 ? '+' : ''}S$${formatNum(totalRealisedSGD.toFixed(2))}</div>
+      <div class="kpi-sub">Closed positions incl. premiums</div>
+    </div>
+  `;
+
+  // ── Holdings table ────────────────────────────────────────────────────
+  const hWrap = document.getElementById('globalHoldingsWrap');
+  if (hWrap) {
+    if (g.holdings.length === 0) {
+      hWrap.innerHTML = emptyTable('No active positions', 'Add your first transaction using the form below.');
     } else {
-      sold.sort((a, b) => (b.lastSell || '').localeCompare(a.lastSell || ''));
-      const rows = sold.map(s => `
-        <tr>
-          <td class="ticker-cell">${escapeHtml(s.code)}</td>
-          <td class="name-cell">${escapeHtml(s.name)}${s.stillHolding ? '<span class="sub">Still holding ' + formatNum(s.remainingQty) + ' units</span>' : '<span class="sub">Position closed</span>'}</td>
-          <td><span class="badge badge-${badgeKey(s.type)}">${s.type}</span></td>
-          <td>${s.firstBuy || '—'}</td>
-          <td>${s.lastSell || '—'}</td>
-          <td class="numeric">${currencySymbol(s.currency)}${formatNum(s.proceeds.toFixed(2))}</td>
-          <td class="numeric bold ${s.realizedSGD >= 0 ? 'stat-positive' : 'stat-negative'}">${s.realizedSGD >= 0 ? '+' : ''}S$${formatNum(s.realizedSGD.toFixed(2))}</td>
-          <td style="white-space:nowrap;">
-            <button class="price-edit-btn" onclick="showStockDetail('${escapeAttr(s.code)}')" title="View/edit transactions">✎</button>
-            <button class="delete-btn" onclick="deleteAllSellsForCode('${escapeAttr(s.code)}')" title="Delete all sell transactions for this counter">×</button>
-          </td>
-        </tr>
-      `).join('');
-      wrap.innerHTML = `<div style="overflow-x:auto;"><table class="data-table">
+      const currTag = (c) => {
+        if (c === 'USD') return '<span class="global-tag-usd">USD</span>';
+        if (c === 'EUR') return '<span class="global-tag-eur">EUR</span>';
+        if (c === 'GBP') return '<span class="global-tag-gbp">GBP</span>';
+        return `<span class="global-tag-usd">${c}</span>`;
+      };
+      const rows = g.holdings.map(p => {
+        const sym = currencySymbol(p.currency);
+        const priceCell = p.livePrice != null
+          ? `${sym}${p.livePrice.toFixed(2)} <button class="price-edit-btn" onclick="setManualPrice('${escapeAttr(p.code)}','${escapeAttr(p.currency)}')" title="Set manually">✎</button><button class="row-refresh-btn" onclick="refreshOneGlobal('${escapeAttr(p.code)}')" title="Fetch live price">↻</button>`
+          : `<button class="btn-set-price" onclick="setManualPrice('${escapeAttr(p.code)}','${escapeAttr(p.currency)}')">Set price</button> <button class="row-refresh-btn" onclick="refreshOneGlobal('${escapeAttr(p.code)}')" title="Fetch live price from Yahoo">↻</button>`;
+        const mvCell = p.marketValue != null ? `${sym}${formatNum(p.marketValue.toFixed(2))}` : `${sym}${formatNum(p.effectiveCost.toFixed(2))}<span style="font-size:10px;color:var(--text-muted);"> at cost</span>`;
+        const plCell = p.unrealisedSGD != null
+          ? `<span class="${p.unrealisedSGD >= 0 ? 'stat-positive' : 'stat-negative'}">${p.unrealisedSGD >= 0 ? '+' : ''}S$${formatNum(p.unrealisedSGD.toFixed(2))}</span>`
+          : '—';
+        const premCell = p.premiumsCollected > 0
+          ? `<span class="global-option-badge">${sym}${formatNum(p.premiumsCollected.toFixed(2))}</span>`
+          : '—';
+        return `<tr>
+          <td><span style="font-family:var(--font-mono);font-size:11.5px;color:var(--blue-700);">${escapeHtml(p.code)}</span> ${currTag(p.currency)}</td>
+          <td>${escapeHtml(p.name)}<br><span style="font-size:10.5px;color:var(--text-muted);">${escapeHtml(p.exchange)}</span></td>
+          <td class="numeric">${formatNum(p.qty)}</td>
+          <td class="numeric">${sym}${p.avgCostEffective.toFixed(2)}<br><span style="font-size:10px;color:var(--text-muted);">raw: ${sym}${p.avgCostRaw.toFixed(2)}</span></td>
+          <td class="numeric" onclick="event.stopPropagation()">${priceCell}</td>
+          <td class="numeric">${mvCell}</td>
+          <td class="numeric">${plCell}</td>
+          <td class="numeric">${premCell}</td>
+        </tr>`;
+      }).join('');
+      hWrap.innerHTML = `<div style="overflow-x:auto;"><table class="data-table" style="min-width:640px;">
         <thead><tr>
-          <th>Ticker</th><th>Name</th><th>Type</th>
-          <th>First buy</th><th>Last sell</th>
-          <th class="numeric">Proceeds (local)</th><th class="numeric">Realised P/L (SGD)</th><th></th>
+          <th>Ticker</th><th>Name</th><th class="numeric">Qty</th>
+          <th class="numeric">Eff. avg cost</th><th class="numeric">Last price</th>
+          <th class="numeric">Market value</th><th class="numeric">Unreal. P/L (SGD)</th>
+          <th class="numeric">Premiums</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table></div>`;
     }
   }
+
+  // ── Option premiums collected ─────────────────────────────────────────
+  const oWrap = document.getElementById('globalOptionsWrap');
+  if (oWrap) {
+    if (g.allPremiums.length === 0) {
+      oWrap.innerHTML = emptyTable('No option premiums recorded', 'Add option events using the form below.');
+    } else {
+      const rows = g.allPremiums.slice().sort((a,b) => b.date.localeCompare(a.date)).map(tx => {
+        const sym = currencySymbol(tx.currency);
+        const kindLabel = { Premium: 'Option premium', PutAssigned: 'Put assigned', CallAssigned: 'Call assigned' }[tx.kind] || tx.kind;
+        return `<tr>
+          <td style="font-size:12px;">${tx.date}</td>
+          <td style="font-family:var(--font-mono);font-size:11.5px;color:var(--blue-700);">${escapeHtml(tx.code)}</td>
+          <td>${escapeHtml(tx.name)}</td>
+          <td><span class="global-option-badge">${kindLabel}</span></td>
+          <td class="numeric stat-positive">${sym}${formatNum((tx.premiumCollected||0).toFixed(2))}</td>
+          <td style="font-size:11px;color:var(--text-muted);">${escapeHtml(tx.notes||'')}</td>
+          <td style="white-space:nowrap;">
+            <button class="price-edit-btn" onclick="editGlobalTx('${escapeAttr(tx.id)}')" title="Edit">✎</button>
+            <button class="delete-btn" onclick="removeGlobalTx('${escapeAttr(tx.id)}')" title="Delete">×</button>
+          </td>
+        </tr>`;
+      }).join('');
+      oWrap.innerHTML = `<div style="overflow-x:auto;"><table class="data-table">
+        <thead><tr><th>Date</th><th>Ticker</th><th>Name</th><th>Type</th><th class="numeric">Premium</th><th>Notes</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>`;
+    }
+  }
+
+  // ── Closed positions ──────────────────────────────────────────────────
+  const cWrap = document.getElementById('globalClosedWrap');
+  if (cWrap) {
+    if (g.closed.length === 0) {
+      cWrap.innerHTML = emptyTable('No closed positions yet', '');
+    } else {
+      const rows = g.closed.map(p => {
+        const sym = currencySymbol(p.currency);
+        return `<tr>
+          <td style="font-family:var(--font-mono);font-size:11.5px;color:var(--blue-700);">${escapeHtml(p.code)}</td>
+          <td>${escapeHtml(p.name)}</td>
+          <td class="numeric">${sym}${formatNum(p.premiumsCollected.toFixed(2))}</td>
+          <td class="numeric bold ${p.realisedSGD >= 0 ? 'stat-positive' : 'stat-negative'}">${p.realisedSGD >= 0 ? '+' : ''}S$${formatNum(p.realisedSGD.toFixed(2))}</td>
+        </tr>`;
+      }).join('');
+      cWrap.innerHTML = `<div style="overflow-x:auto;"><table class="data-table">
+        <thead><tr><th>Ticker</th><th>Name</th><th class="numeric">Premiums collected</th><th class="numeric">Realised P/L (SGD)</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>`;
+    }
+  }
+
+  // ── Transaction log ───────────────────────────────────────────────────
+  const lWrap = document.getElementById('globalTxLogWrap');
+  if (lWrap) {
+    if (g.allTxs.length === 0) {
+      lWrap.innerHTML = emptyTable('No transactions yet', '');
+    } else {
+      const kindLabel = k => ({ Buy:'Buy', Sell:'Sell', Premium:'Option premium', PutAssigned:'Put assigned', CallAssigned:'Call assigned' }[k] || k);
+      const rows = g.allTxs.slice().sort((a,b) => b.date.localeCompare(a.date)).map(tx => {
+        const sym = currencySymbol(tx.currency);
+        const amt = tx.kind === 'Premium' ? `${sym}${formatNum((tx.premiumCollected||0).toFixed(2))} premium`
+          : tx.kind === 'PutAssigned' ? `${formatNum(tx.quantity)} @ ${sym}${(tx.price||0).toFixed(2)} + ${sym}${formatNum((tx.premiumCollected||0).toFixed(2))} prem`
+          : tx.kind === 'CallAssigned' ? `${formatNum(tx.quantity)} @ ${sym}${(tx.price||0).toFixed(2)} + ${sym}${formatNum((tx.premiumCollected||0).toFixed(2))} prem`
+          : `${formatNum(tx.quantity||0)} @ ${sym}${(tx.price||0).toFixed(2)}`;
+        return `<tr>
+          <td style="font-size:12px;">${tx.date}</td>
+          <td><span style="font-family:var(--font-mono);font-size:11px;color:var(--blue-700);">${escapeHtml(tx.code)}</span><br><span style="font-size:11px;color:var(--text-muted);">${escapeHtml(tx.name)}</span></td>
+          <td><span class="badge badge-Stock" style="font-size:10px;">${kindLabel(tx.kind)}</span></td>
+          <td class="numeric" style="font-size:12px;">${amt}</td>
+          <td style="white-space:nowrap;">
+            <button class="price-edit-btn" onclick="editGlobalTx('${escapeAttr(tx.id)}')" title="Edit">✎</button>
+            <button class="delete-btn" onclick="removeGlobalTx('${escapeAttr(tx.id)}')" title="Delete">×</button>
+          </td>
+        </tr>`;
+      }).join('');
+      lWrap.innerHTML = `<table class="data-table" style="width:100%;table-layout:fixed;">
+        <colgroup><col style="width:90px"><col style="width:auto"><col style="width:100px"><col style="width:150px"><col style="width:56px"></colgroup>
+        <thead><tr style="font-size:11px;"><th>Date</th><th>Counter</th><th>Kind</th><th class="numeric">Detail</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+    }
+  }
 }
+window.renderGlobal = renderGlobal;
+
+/* =====================================================================
+   SOLD TAB
+   ===================================================================== */
+function renderSold() {
+  const wrap = document.getElementById('soldTableWrap');
+  if (!wrap) return;
+  const allCodes = [...new Set(state.transactions.filter(t => ['Stock','REIT','ETF'].includes(t.type)).map(t => t.code))];
+  const sold = [];
+  for (const code of allCodes) {
+    const txs = state.transactions.filter(t => t.code === code).slice().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    const hasSells = txs.some(t => t.kind === 'Sell');
+    if (!hasSells) continue;
+    const meta = lookupByCode(code);
+    const currency = meta?.currency || 'SGD';
+    let qty = 0, totalCost = 0, realizedPL = 0, proceeds = 0;
+    let firstBuy = null, lastSell = null;
+    const buyQueue = [];
+    for (const tx of txs) {
+      if (tx.kind === 'Buy') {
+        qty += tx.quantity || 0;
+        const costPerShare = (tx.price || 0) + (tx.fees || 0) / Math.max(tx.quantity, 1);
+        buyQueue.push({ qty: tx.quantity || 0, cost: costPerShare });
+        totalCost += (tx.quantity || 0) * costPerShare;
+        if (!firstBuy || tx.date < firstBuy) firstBuy = tx.date;
+      }
+      if (tx.kind === 'Sell') {
+        let sellQty = tx.quantity || 0;
+        const salePrice = (tx.price || 0) - (tx.fees || 0) / Math.max(tx.quantity, 1);
+        proceeds += (tx.quantity || 0) * salePrice;
+        while (sellQty > 0 && buyQueue.length > 0) {
+          const lot = buyQueue[0];
+          const used = Math.min(sellQty, lot.qty);
+          realizedPL += used * (salePrice - lot.cost);
+          lot.qty -= used; sellQty -= used;
+          if (lot.qty < 0.001) buyQueue.shift();
+        }
+        qty -= tx.quantity || 0;
+        if (!lastSell || tx.date > lastSell) lastSell = tx.date;
+      }
+    }
+    const realizedSGD = toSGD(realizedPL, currency);
+    const remainingQty = Math.max(0, qty);
+    sold.push({ code, name: meta?.name || code, type: meta?.type || 'Stock', currency, firstBuy, lastSell, proceeds, realizedPL, realizedSGD, remainingQty, stillHolding: remainingQty > 0.001 });
+  }
+  if (sold.length === 0) {
+    wrap.innerHTML = emptyTable('No sell transactions recorded', 'Sell transactions appear here once you record them in Add Transactions.');
+    return;
+  }
+  sold.sort((a, b) => (b.lastSell || '').localeCompare(a.lastSell || ''));
+  const rows = sold.map(s => `
+    <tr>
+      <td class="ticker-cell">${escapeHtml(s.code)}</td>
+      <td class="name-cell">${escapeHtml(s.name)}${s.stillHolding ? '<span class="sub">Still holding ' + formatNum(s.remainingQty) + ' units</span>' : '<span class="sub">Position closed</span>'}</td>
+      <td><span class="badge badge-${badgeKey(s.type)}">${s.type}</span></td>
+      <td>${s.firstBuy || '—'}</td>
+      <td>${s.lastSell || '—'}</td>
+      <td class="numeric">${currencySymbol(s.currency)}${formatNum(s.proceeds.toFixed(2))}</td>
+      <td class="numeric bold ${s.realizedSGD >= 0 ? 'stat-positive' : 'stat-negative'}">${s.realizedSGD >= 0 ? '+' : ''}S$${formatNum(s.realizedSGD.toFixed(2))}</td>
+      <td style="white-space:nowrap;">
+        <button class="price-edit-btn" onclick="showStockDetail('${escapeAttr(s.code)}')" title="View/edit transactions">✎</button>
+        <button class="delete-btn" onclick="deleteAllSellsForCode('${escapeAttr(s.code)}')" title="Delete all sell transactions for this counter">×</button>
+      </td>
+    </tr>
+  `).join('');
+  wrap.innerHTML = `<div style="overflow-x:auto;"><table class="data-table">
+    <thead><tr>
+      <th>Ticker</th><th>Name</th><th>Type</th>
+      <th>First buy</th><th>Last sell</th>
+      <th class="numeric">Proceeds (local)</th><th class="numeric">Realised P/L (SGD)</th><th></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+window.renderSold = renderSold;
+
+function showGlobalForm(kind) {
+  // Build stock search options from GLOBAL_DATABASE
+  const existingCodes = [...new Set(state.transactions.filter(t => t.type==='Global').map(t => t.code))];
+  const allOptions = GLOBAL_DATABASE.map(s =>
+    `<option value="${escapeAttr(s.ticker)}" data-currency="${s.currency}" data-exchange="${s.exchange}" data-name="${escapeAttr(s.name)}">${s.ticker} — ${s.name} (${s.exchange})</option>`
+  ).join('');
+
+  const isPremiumOnly = kind === 'premium';
+  const isBuy   = kind === 'buy' || kind === 'put-assigned';
+  const isSell  = kind === 'sell' || kind === 'call-assigned';
+  const isAssigned = kind === 'put-assigned' || kind === 'call-assigned';
+
+  const kindLabel = { buy:'Buy', sell:'Sell', premium:'Option premium collected', 'put-assigned':'Put assigned — shares bought', 'call-assigned':'Call assigned — shares sold' }[kind];
+  const kindKey   = { buy:'Buy', sell:'Sell', premium:'Premium', 'put-assigned':'PutAssigned', 'call-assigned':'CallAssigned' }[kind];
+
+  const qtyBlock = !isPremiumOnly ? `
+    <div class="field"><label>Shares ${isAssigned ? '(typically 100)' : ''}</label>
+    <input type="number" id="gf_qty" value="${isAssigned?100:''}" step="1" min="0" /></div>
+    <div class="field"><label>Price per share</label>
+    <input type="number" id="gf_price" step="0.001" min="0" /></div>
+    <div class="field"><label>Brokerage fees</label>
+    <input type="number" id="gf_fees" value="0" step="0.01" min="0" /></div>
+  ` : '';
+
+  const premBlock = `
+    <div class="field"><label>Option premium collected${!isPremiumOnly ? ' (upfront)' : ''}</label>
+    <input type="number" id="gf_premium" step="0.01" min="0" placeholder="0.00" /></div>
+  `;
+
+  showModal({
+    header: `<div><h2>${kindLabel}</h2></div>`,
+    body: `<div class="form-grid">
+      <div class="field full"><label>Stock / ETF</label>
+        <select id="gf_code" style="width:100%;" onchange="onGlobalStockChange()">
+          <option value="">— Select stock —</option>
+          ${allOptions}
+        </select>
+      </div>
+      <div class="field"><label>Date</label><input type="date" id="gf_date" value="${todayISO()}" /></div>
+      <div class="field"><label>Currency</label>
+        <select id="gf_currency">
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+          <option value="GBP">GBP</option>
+        </select>
+      </div>
+      ${qtyBlock}
+      ${premBlock}
+      <div class="field full"><label>Notes</label><input type="text" id="gf_notes" placeholder="Optional" /></div>
+    </div>`,
+    footer: `
+      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveGlobalTx('${kindKey}')">Add transaction</button>
+    `,
+  });
+  setTimeout(() => document.getElementById('gf_code')?.focus(), 60);
+}
+window.showGlobalForm = showGlobalForm;
+
+function onGlobalStockChange() {
+  const sel = document.getElementById('gf_code');
+  const opt = sel?.options[sel.selectedIndex];
+  if (!opt || !opt.value) return;
+  const currency = opt.dataset.currency || 'USD';
+  const currSel = document.getElementById('gf_currency');
+  if (currSel) currSel.value = currency;
+}
+window.onGlobalStockChange = onGlobalStockChange;
+
+function saveGlobalTx(kindKey) {
+  const code     = document.getElementById('gf_code')?.value?.trim() || '';
+  const date     = document.getElementById('gf_date')?.value || '';
+  const currency = document.getElementById('gf_currency')?.value || 'USD';
+  const qty      = parseFloat(document.getElementById('gf_qty')?.value) || 0;
+  const price    = parseFloat(document.getElementById('gf_price')?.value) || 0;
+  const fees     = parseFloat(document.getElementById('gf_fees')?.value) || 0;
+  const premium  = parseFloat(document.getElementById('gf_premium')?.value) || 0;
+  const notes    = document.getElementById('gf_notes')?.value || '';
+
+  if (!code) { toast('error', 'Please select a stock'); return; }
+  if (!date) { toast('error', 'Date is required'); return; }
+  if (['Buy','Sell','PutAssigned','CallAssigned'].includes(kindKey) && qty <= 0) {
+    toast('error', 'Shares must be greater than zero'); return;
+  }
+
+  const dbEntry = GLOBAL_DATABASE.find(s => s.ticker === code);
+  const name = dbEntry?.name || code;
+  const exchange = dbEntry?.exchange || '';
+
+  const tx = {
+    id: 't_' + Math.random().toString(36).slice(2, 9),
+    addedAt: new Date().toISOString(),
+    type: 'Global', kind: kindKey,
+    code, name, currency, exchange,
+    date, quantity: qty, price, fees,
+    premiumCollected: premium,
+    notes, _manual: true,
+  };
+
+  state.transactions.unshift(tx);
+  saveState();
+  closeModal();
+  renderGlobal();
+  toast('success', `Transaction added · <strong>${escapeHtml(code)}</strong> · ${date}`);
+}
+window.saveGlobalTx = saveGlobalTx;
+
+function removeGlobalTx(id) {
+  if (!confirm('Delete this transaction?')) return;
+  state.transactions = state.transactions.filter(t => t.id !== id);
+  saveState(); renderGlobal();
+}
+window.removeGlobalTx = removeGlobalTx;
+
+function editGlobalTx(id) {
+  const tx = state.transactions.find(t => t.id === id);
+  if (!tx) return;
+  const sym = currencySymbol(tx.currency);
+  const isPremiumOnly = tx.kind === 'Premium';
+  const kindLabel = { Buy:'Buy', Sell:'Sell', Premium:'Option premium collected', PutAssigned:'Put assigned', CallAssigned:'Call assigned' }[tx.kind] || tx.kind;
+  showModal({
+    header: `<div><h2>Edit — ${kindLabel}</h2><div class="sub">${escapeHtml(tx.code)} · ${tx.date}</div></div>`,
+    body: `<div class="form-grid">
+      <div class="field"><label>Date</label><input type="date" id="egt_date" value="${tx.date||''}" /></div>
+      <div class="field"><label>Currency</label>
+        <select id="egt_currency">
+          <option value="USD" ${tx.currency==='USD'?'selected':''}>USD</option>
+          <option value="EUR" ${tx.currency==='EUR'?'selected':''}>EUR</option>
+          <option value="GBP" ${tx.currency==='GBP'?'selected':''}>GBP</option>
+        </select>
+      </div>
+      ${!isPremiumOnly ? `
+      <div class="field"><label>Shares</label><input type="number" id="egt_qty" value="${tx.quantity||''}" step="1" min="0" /></div>
+      <div class="field"><label>Price per share (${sym})</label><input type="number" id="egt_price" value="${tx.price||''}" step="0.001" min="0" /></div>
+      <div class="field"><label>Fees (${sym})</label><input type="number" id="egt_fees" value="${tx.fees||0}" step="0.01" min="0" /></div>
+      ` : ''}
+      <div class="field"><label>Premium collected (${sym})</label><input type="number" id="egt_premium" value="${tx.premiumCollected||''}" step="0.01" min="0" /></div>
+      <div class="field full"><label>Notes</label><input type="text" id="egt_notes" value="${escapeAttr(tx.notes||'')}" /></div>
+    </div>`,
+    footer: `
+      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditGlobalTx('${escapeAttr(id)}')">Save changes</button>
+    `,
+  });
+}
+window.editGlobalTx = editGlobalTx;
+
+function saveEditGlobalTx(id) {
+  const tx = state.transactions.find(t => t.id === id);
+  if (!tx) return;
+  tx.date             = document.getElementById('egt_date')?.value || tx.date;
+  tx.currency         = document.getElementById('egt_currency')?.value || tx.currency;
+  tx.quantity         = parseFloat(document.getElementById('egt_qty')?.value)     || tx.quantity;
+  tx.price            = parseFloat(document.getElementById('egt_price')?.value)   || tx.price;
+  tx.fees             = parseFloat(document.getElementById('egt_fees')?.value)    ?? tx.fees;
+  tx.premiumCollected = parseFloat(document.getElementById('egt_premium')?.value) || tx.premiumCollected;
+  tx.notes            = document.getElementById('egt_notes')?.value ?? tx.notes;
+  saveState(); closeModal(); renderGlobal();
+  toast('success', `Updated · <strong>${escapeHtml(tx.code)}</strong>`);
+}
+window.saveEditGlobalTx = saveEditGlobalTx;
+
+function refreshOneGlobal(code) {
+  const tx = state.transactions.find(t => t.code === code && t.type === 'Global');
+  const currency = tx?.currency || 'USD';
+  refreshOneTicker(code).then(() => {
+    renderGlobal();
+  }).catch(() => {
+    // refreshOneTicker handles its own error toasts
+  });
+}
+window.refreshOneGlobal = refreshOneGlobal;
+
 
 function deleteAllSellsForCode(code) {
   const sellCount = state.transactions.filter(t => t.code === code && t.kind === 'Sell').length;
@@ -5816,78 +6555,112 @@ function renderTransactions() {
    ===================================================================== */
 
 // Fetch price for one ticker, starting with preferredProxyIdx
-async function fetchYahooPrice(ticker, preferredProxyIdx = 0) {
+// ── Price API configuration ─────────────────────────────────────────────
+// Twelve Data: free tier, 800 req/day, no CORS issues, direct browser calls
+// Yahoo Finance via CORS proxies: fallback for SGX and when no API key set
+const TWELVE_DATA_KEY_STORAGE = 'tdApiKey';
+function getTwelveDataKey() { return localStorage.getItem(TWELVE_DATA_KEY_STORAGE) || ''; }
+function isSgxTicker(t) { return t.endsWith('.SI'); }
+
+async function fetchViaTwelveData(ticker) {
+  const key = getTwelveDataKey();
+  if (!key) return null;
+  // Translate Yahoo Finance ticker format → Twelve Data format
+  // D05.SI → D05:SGX | PRX.AS → PRX:AMS | SHEL.L → SHEL:LSE | AAPL → AAPL
+  let tdTicker = ticker;
+  let currency = 'USD';
+  if (ticker.endsWith('.SI'))      { tdTicker = ticker.replace('.SI', '') + ':SGX'; currency = 'SGD'; }
+  else if (ticker.endsWith('.AS')) { tdTicker = ticker.replace('.AS', '') + ':AMS'; currency = 'EUR'; }
+  else if (ticker.endsWith('.L'))  { tdTicker = ticker.replace('.L',  '') + ':LSE'; currency = 'GBP'; }
+  try {
+    const resp = await fetch(
+      `https://api.twelvedata.com/price?symbol=${encodeURIComponent(tdTicker)}&apikey=${encodeURIComponent(key)}`,
+      { signal: AbortSignal.timeout(6000) }
+    );
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    if (data.status === 'error' || !data.price) return null;
+    const price = parseFloat(data.price);
+    if (!isFinite(price) || price <= 0) return null;
+    return { price, currency };
+  } catch { return null; }
+}
+
+async function fetchViaYahooProxy(ticker) {
   const yahooUrls = [
+    `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(ticker)}&fields=regularMarketPrice,currency`,
+    `https://query2.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(ticker)}&fields=regularMarketPrice,currency`,
     `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=5d`,
-    `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=5d`,
   ];
-  // Rotate proxy list so preferred proxy is tried first
-  const proxies = [
-    ...PROXY_URLS.slice(preferredProxyIdx),
-    ...PROXY_URLS.slice(0, preferredProxyIdx),
-  ];
-  for (const yahooUrl of yahooUrls) {
-    for (const proxyFn of proxies) {
-      try {
-        const resp = await fetch(proxyFn(yahooUrl), {
-          signal: AbortSignal.timeout(7000),
-        });
-        if (!resp.ok) continue;
-        const data = await resp.json();
-        const meta = data?.chart?.result?.[0]?.meta;
-        if (!meta) continue;
-        const price = meta.regularMarketPrice ?? meta.previousClose;
-        if (typeof price === 'number' && price > 0) {
-          return { price, currency: meta.currency || 'SGD' };
-        }
-      } catch { continue; }
+  const extractPrice = (data) => {
+    const q = data?.quoteResponse?.result?.[0];
+    if (q && typeof q.regularMarketPrice === 'number' && q.regularMarketPrice > 0)
+      return { price: q.regularMarketPrice, currency: q.currency || 'SGD' };
+    const m = data?.chart?.result?.[0]?.meta;
+    if (m) { const p = m.regularMarketPrice ?? m.previousClose; if (typeof p === 'number' && p > 0) return { price: p, currency: m.currency || 'SGD' }; }
+    return null;
+  };
+  const attempts = [];
+  for (const url of yahooUrls) {
+    for (const proxyFn of PROXY_URLS) {
+      attempts.push(
+        fetch(proxyFn(url), { signal: AbortSignal.timeout(8000) })
+          .then(r => r.ok ? r.json() : Promise.reject())
+          .then(data => { const r = extractPrice(data); return r || Promise.reject(); })
+          .catch(() => new Promise(() => {}))
+      );
     }
   }
-  return null;
+  try { return await Promise.race(attempts); } catch { return null; }
 }
 
-// Fetch prices for multiple tickers using a worker pool.
-// Each worker "owns" one proxy → 4 tickers run in parallel without hitting the same proxy twice.
-async function fetchPricesWithPool(tickers, onProgress) {
-  const results = {};
-  const queue = [...tickers];
-  let done = 0;
+async function fetchYahooPrice(ticker, preferredProxyIdx = 0) {
+  const key = getTwelveDataKey();
+  if (key) {
+    // Race Twelve Data against Yahoo proxy simultaneously
+    // Whichever returns a valid price first wins — no waiting for failures
+    const tdPromise = fetchViaTwelveData(ticker).catch(() => null);
+    const yahooPromise = fetchViaYahooProxy(ticker).catch(() => null);
 
-  async function worker(proxyIdx) {
-    while (true) {
-      const ticker = queue.shift();
-      if (!ticker) break;
-      let result = null;
-      try { result = await fetchYahooPrice(ticker, proxyIdx); } catch { result = null; }
-      results[ticker] = result;
-      done++;
-      if (onProgress) onProgress(done, tickers.length, ticker, !!result);
-    }
+    // Use Promise.race but filter out nulls — take first non-null result
+    return new Promise(resolve => {
+      let resolved = false;
+      let pending = 2;
+      const settle = (result) => {
+        if (result && !resolved) { resolved = true; resolve(result); return; }
+        pending--;
+        if (pending === 0 && !resolved) resolve(null);
+      };
+      tdPromise.then(settle);
+      yahooPromise.then(settle);
+    });
   }
-
-  // Run one worker per proxy in parallel
-  await Promise.all(PROXY_URLS.map((_, i) => worker(i)));
-  return results;
+  return fetchViaYahooProxy(ticker);
 }
+
 
 async function fetchUsdSgd() {
-  const yahooUrls = [
-    `https://query1.finance.yahoo.com/v8/finance/chart/USDSGD%3DX?interval=1d&range=5d`,
-    `https://query2.finance.yahoo.com/v8/finance/chart/USDSGD%3DX?interval=1d&range=5d`,
-  ];
-  for (const yahooUrl of yahooUrls) {
+  const key = getTwelveDataKey();
+  if (key) {
+    try {
+      const resp = await fetch(`https://api.twelvedata.com/price?symbol=USD/SGD&apikey=${encodeURIComponent(key)}`, { signal: AbortSignal.timeout(5000) });
+      if (resp.ok) { const data = await resp.json(); const rate = parseFloat(data.price); if (isFinite(rate) && rate > 0) return rate; }
+    } catch {}
+  }
+  const attempts = [];
+  for (const url of [`https://query1.finance.yahoo.com/v8/finance/chart/USDSGD%3DX?interval=1d&range=5d`, `https://query2.finance.yahoo.com/v8/finance/chart/USDSGD%3DX?interval=1d&range=5d`]) {
     for (const proxyFn of PROXY_URLS) {
-      try {
-        const resp = await fetch(proxyFn(yahooUrl), { signal: AbortSignal.timeout(6000) });
-        if (!resp.ok) continue;
-        const meta = (await resp.json())?.chart?.result?.[0]?.meta;
-        const rate = meta?.regularMarketPrice ?? meta?.previousClose;
-        if (typeof rate === 'number' && rate > 0) return rate;
-      } catch { continue; }
+      attempts.push(
+        fetch(proxyFn(url), { signal: AbortSignal.timeout(8000) })
+          .then(r => r.ok ? r.json() : Promise.reject())
+          .then(data => { const m = data?.chart?.result?.[0]?.meta; const rate = m?.regularMarketPrice ?? m?.previousClose; return (typeof rate === 'number' && rate > 0) ? rate : Promise.reject(); })
+          .catch(() => new Promise(() => {}))
+      );
     }
   }
-  return null;
+  try { return await Promise.race(attempts); } catch { return null; }
 }
+
 
 async function refreshAllPrices(onlyTickers = null) {
   if (state.loading) {
@@ -5897,9 +6670,11 @@ async function refreshAllPrices(onlyTickers = null) {
 
   const positions = computeEquityPositions().filter(p => p.qty > 0);
   const fixed = computeFixedIncome();
+  const globalPositions = computeGlobal().holdings;
   const allTickers = [...new Set([
     ...positions.map(p => p.code),
     ...fixed.bonds.map(b => b.code),
+    ...globalPositions.map(p => p.code),
   ])];
   const tickers = onlyTickers ? onlyTickers.filter(t => allTickers.includes(t)) : allTickers;
 
@@ -7277,8 +8052,59 @@ function exportStateObject() {
 
 // ── Setup modal ─────────────────────────────────────────────────────────────
 
+function showPriceApiModal() {
+  const existing = getTwelveDataKey();
+  const configuredNote = existing
+    ? '<div style="margin-top:8px;font-size:12px;color:var(--green-700);">✓ API key already configured. SGX prices fetch via Yahoo; all other tickers use Twelve Data.</div>'
+    : '';
+  const removeBtn = existing
+    ? '<button class="btn-secondary danger" onclick="clearPriceApiKey()">Remove key</button>'
+    : '';
+  showModal({
+    header: '<div><h2>Price API key setup</h2><div class="sub">Twelve Data — free, direct, no CORS proxies needed</div></div>',
+    body: '<div style="font-size:13.5px;line-height:1.7;color:var(--text-body);">'
+      + '<div style="background:var(--bg-subtle);border:1px solid var(--border-soft);border-radius:var(--radius);padding:12px 14px;margin-bottom:16px;font-size:12.5px;color:var(--text-muted);">'
+      + 'Twelve Data provides free stock price data for NYSE, NASDAQ, LSE, AMS and other exchanges. '
+      + 'Free tier: <strong>800 requests/day</strong>. SGX prices continue using Yahoo Finance (unchanged).'
+      + '</div>'
+      + '<div style="margin-bottom:16px;">'
+      + '<strong>Step 1</strong> — Go to <a href="https://twelvedata.com" target="_blank" style="color:var(--blue-700);">twelvedata.com</a> and sign up for a free account.<br>'
+      + '<strong>Step 2</strong> — After signing in, go to your dashboard and copy your API key.<br>'
+      + '<strong>Step 3</strong> — Paste it below and click Save.'
+      + '</div>'
+      + '<label style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);display:block;margin-bottom:6px;">Your Twelve Data API key</label>'
+      + '<input type="text" id="tdKeyInput" value="' + escapeAttr(existing) + '" placeholder="Paste your API key here…"'
+      + ' style="width:100%;font-family:var(--font-mono);font-size:12.5px;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-elevated);" />'
+      + configuredNote
+      + '</div>',
+    footer: '<button class="btn-secondary" onclick="closeModal()">Cancel</button>'
+      + removeBtn
+      + '<button class="btn btn-primary" onclick="savePriceApiKey()">Save</button>',
+  });
+  setTimeout(() => document.getElementById('tdKeyInput')?.focus(), 60);
+}
+window.showPriceApiModal = showPriceApiModal;
+
+function savePriceApiKey() {
+  const key = (document.getElementById('tdKeyInput')?.value || '').trim();
+  if (!key) { toast('error', 'Please paste your API key'); return; }
+  localStorage.setItem(TWELVE_DATA_KEY_STORAGE, key);
+  const lbl = document.getElementById('priceApiMenuLabel');
+  if (lbl) lbl.textContent = 'Price API key configured ✓';
+  closeModal();
+  toast('success', 'Twelve Data API key saved — prices will now fetch directly without proxies for non-SGX tickers.');
+}
+window.savePriceApiKey = savePriceApiKey;
+
+function clearPriceApiKey() {
+  if (!confirm('Remove the Twelve Data API key? Price fetching will fall back to CORS proxies.')) return;
+  localStorage.removeItem(TWELVE_DATA_KEY_STORAGE);
+  closeModal();
+  toast('success', 'API key removed');
+}
+window.clearPriceApiKey = clearPriceApiKey;
+
 function driveShowSetup() {
-  const existingId = localStorage.getItem(DRIVE_CLIENT_KEY) || '';
   showModal({
     header: `<div>
       <h2>Google Drive sync setup</h2>
@@ -7322,14 +8148,12 @@ function driveShowSetup() {
           />
         </div>
 
-        ${existingId ? `<div style="margin-top:10px;padding:8px 12px;background:#FFF8E6;border:1px solid #F0C060;border-radius:6px;font-size:12.5px;color:#7A5800;">Currently configured. Paste a new ID to update, or leave as-is.</div>` : ''}
+        ${existingId ? '<div style="margin-top:10px;padding:8px 12px;background:#FFF8E6;border:1px solid #F0C060;border-radius:6px;font-size:12.5px;color:#7A5800;">Currently configured. Paste a new ID to update, or leave as-is.</div>' : ''}
       </div>
     `,
-    footer: `
-      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
-      ${existingId ? `<button class="btn-secondary danger" onclick="driveClearSetup()">Disconnect Drive</button>` : ''}
-      <button class="btn btn-primary" onclick="driveSaveSetup()">Save &amp; connect</button>
-    `,
+    footer: '<button class="btn-secondary" onclick="closeModal()">Cancel</button>'
+      + (existingId ? '<button class="btn-secondary danger" onclick="driveClearSetup()">Disconnect Drive</button>' : '')
+      + '<button class="btn btn-primary" onclick="driveSaveSetup()">Save &amp; connect</button>',
     extraClass: 'modal-wide',
   });
   setTimeout(() => document.getElementById('driveClientIdInput')?.focus(), 80);
@@ -7545,9 +8369,9 @@ function init() {
     els.menuDropdown.classList.add('hidden');
     showFxModal();
   });
-  document.getElementById('menuDriveSetup')?.addEventListener('click', () => {
+  document.getElementById('menuPriceApi')?.addEventListener('click', () => {
     els.menuDropdown.classList.add('hidden');
-    driveShowSetup();
+    showPriceApiModal();
   });
   els.menuClear.addEventListener('click', () => {
     els.menuDropdown.classList.add('hidden');
