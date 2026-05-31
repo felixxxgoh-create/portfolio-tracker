@@ -2134,40 +2134,36 @@ input::placeholder { color: var(--text-muted); }
     flex-wrap: nowrap;
   }
   /* Shrink brand text */
-  .brand-name { font-size: 14px; }
+  .brand-name { font-size: 13px; }
   .brand-sub  { font-size: 10px; }
-  .brand-mark { width: 32px; height: 32px; font-size: 12px; }
+  .brand-mark { width: 30px; height: 30px; font-size: 11px; }
 
-  /* Controls: only show FX pill + Refresh icon + ⋮ */
+  /* Controls: only ⋮ button visible, everything else in menu */
   .header-controls {
     gap: 4px;
     flex-wrap: nowrap;
-    overflow: hidden;
+    overflow: visible;
     align-items: center;
     flex-shrink: 0;
-    max-width: calc(100vw - 120px);
   }
-  .header-btn span { display: none; }           /* icon only */
-  .header-btn { padding: 7px 8px; min-width: 0; flex-shrink: 1; }
-  .fx-pill { padding: 5px 7px; font-size: 11px; flex-shrink: 1; min-width: 0; }
-  .fx-pill span:first-child { display: none; }  /* hide "USD/SGD" label */
-  /* Hide drive and import buttons — available in ⋮ menu */
-  #driveSaveBtn, #driveLoadBtn, #importBtn { display: none !important; }
-  /* Pin ⋮ to right, never shrink or overflow */
-  .menu-wrap { margin-left: 2px; flex-shrink: 0; flex-grow: 0; }
+  .header-btn { display: none !important; }   /* hide ALL header buttons */
+  .menu-wrap { display: flex !important; }    /* always show ⋮ */
+  #menuBtn { display: inline-flex !important; padding: 8px 10px; } /* keep ⋮ visible */
+  .fx-pill { display: inline-flex; padding: 5px 8px; font-size: 11px; flex-shrink: 1; min-width: 0; }
+  .fx-pill span:first-child { display: none; }
 
   /* ── Tabs ── */
   .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; gap: 0; }
   .tab  { white-space: nowrap; flex-shrink: 0; font-size: 12px; padding: 10px 11px; }
 
-  /* ── KPI cards ── */
-  .kpi-row { grid-template-columns: 1fr 1fr; gap: 8px; }
-  .kpi-card.featured { grid-column: span 2; }
-  .kpi-card { padding: 12px 10px; overflow: hidden; }
+  /* ── KPI cards: single column so numbers never get cut off ── */
+  .kpi-row { grid-template-columns: 1fr; gap: 8px; }
+  .kpi-card.featured { grid-column: span 1; }
+  .kpi-card { padding: 14px 14px; overflow: hidden; }
   .kpi-label { font-size: 10px; }
-  .kpi-value { font-size: clamp(13px, 4vw, 18px); word-break: break-word; overflow-wrap: anywhere; }
-  .kpi-card.featured .kpi-value { font-size: clamp(16px, 5.5vw, 26px); }
-  .kpi-sub { font-size: 10px; overflow: hidden; text-overflow: ellipsis; }
+  .kpi-value { font-size: 24px; word-break: break-word; overflow-wrap: anywhere; }
+  .kpi-card.featured .kpi-value { font-size: 28px; }
+  .kpi-sub { font-size: 11px; }
 
   /* ── Cards ── */
   .card { padding: 12px 10px; border-radius: 10px; }
