@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SG Portfolio Tracker</title>
+<title>Portfolio Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -1034,10 +1034,11 @@ input::placeholder { color: var(--text-muted); }
   letter-spacing: -0.02em;
   color: var(--blue-900);
   line-height: 1.1;
-  word-break: break-word;
-  overflow-wrap: break-word;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.kpi-card.featured .kpi-value { font-size: 28px; color: white; }
+.kpi-card.featured .kpi-value { font-size: 26px; color: white; }
 .kpi-sub {
   font-size: 12.5px;
   color: var(--text-secondary);
@@ -2162,10 +2163,10 @@ input::placeholder { color: var(--text-muted); }
   /* ── KPI cards: single column so numbers never get cut off ── */
   .kpi-row { grid-template-columns: 1fr !important; gap: 8px; }
   .kpi-card.featured { grid-column: span 1 !important; }
-  .kpi-card { padding: 14px 14px; overflow: hidden; }
+  .kpi-card { padding: 14px 14px; }
   .kpi-label { font-size: 10px; }
-  .kpi-value { font-size: 26px; word-break: break-word; }
-  .kpi-card.featured .kpi-value { font-size: 30px; }
+  .kpi-value { font-size: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kpi-card.featured .kpi-value { font-size: 26px; }
   .kpi-sub { font-size: 11px; }
 
   /* ── Cards ── */
@@ -2210,10 +2211,12 @@ input::placeholder { color: var(--text-muted); }
 
   <header class="app-header">
     <div class="brand">
-      <div class="brand-mark">SG</div>
+      <div class="brand-mark">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+</div>
       <div>
         <div class="brand-title">Portfolio Tracker</div>
-        <div class="brand-subtitle">Singapore · SGX</div>
+        <div class="brand-subtitle">Tracking Simplified</div>
       </div>
     </div>
     <div class="header-controls">
