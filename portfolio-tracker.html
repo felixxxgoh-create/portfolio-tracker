@@ -1038,7 +1038,7 @@ input::placeholder { color: var(--text-muted); }
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.kpi-card.featured .kpi-value { font-size: 26px; color: white; }
+.kpi-card.featured .kpi-value { font-size: 24px; color: white; }
 .kpi-sub {
   font-size: 12.5px;
   color: var(--text-secondary);
@@ -2160,13 +2160,13 @@ input::placeholder { color: var(--text-muted); }
   .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; gap: 0; }
   .tab  { white-space: nowrap; flex-shrink: 0; font-size: 12px; padding: 10px 11px; }
 
-  /* ── KPI cards: single column so numbers never get cut off ── */
-  .kpi-row { grid-template-columns: 1fr !important; gap: 8px; }
-  .kpi-card.featured { grid-column: span 1 !important; }
-  .kpi-card { padding: 14px 14px; }
+  /* ── KPI cards ── */
+  .kpi-row { display: flex !important; flex-direction: column !important; gap: 8px; }
+  .kpi-card { padding: 14px 14px; width: 100%; }
+  .kpi-card.featured { grid-column: unset; }
   .kpi-label { font-size: 10px; }
-  .kpi-value { font-size: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .kpi-card.featured .kpi-value { font-size: 26px; }
+  .kpi-value { font-size: 20px; }
+  .kpi-card.featured .kpi-value { font-size: 20px; }
   .kpi-sub { font-size: 11px; }
 
   /* ── Cards ── */
