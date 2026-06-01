@@ -1038,7 +1038,7 @@ input::placeholder { color: var(--text-muted); }
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.kpi-card.featured .kpi-value { font-size: 20px; color: white; }
+.kpi-card.featured .kpi-value { font-size: 18px; color: white; }
 .kpi-sub {
   font-size: 12.5px;
   color: var(--text-secondary);
@@ -2181,9 +2181,20 @@ input::placeholder { color: var(--text-muted); }
   .form-grid  { grid-template-columns: 1fr; }
   .form-grid .field.full { grid-column: span 1; }
 
-  /* ── Tables ── */
-  .data-table { font-size: 11px; }
-  table.data-table { min-width: 500px; }
+  /* ── Tables: hide non-essential columns on mobile ── */
+  /* Equities: hide Avg cost(5), Divs rcvd(9), Total return(10), Wt%(11) */
+  #holdingsTable th:nth-child(5), #holdingsTable td:nth-child(5),
+  #holdingsTable th:nth-child(9), #holdingsTable td:nth-child(9),
+  #holdingsTable th:nth-child(10), #holdingsTable td:nth-child(10),
+  #holdingsTable th:nth-child(11), #holdingsTable td:nth-child(11) { display: none; }
+  /* Shrink remaining columns */
+  #holdingsTable { font-size: 11px; table-layout: auto; }
+  #holdingsTable colgroup { display: none; }
+  .data-table th { font-size: 9px; padding: 5px 4px; }
+  .data-table td { font-size: 11px; padding: 5px 4px; }
+  .name-cell { max-width: 100px; }
+  /* Allow horizontal scroll on all tables */
+  .card > div { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
   /* ── Menu dropdown ── */
   .menu { right: 0; left: auto; min-width: 220px; }
@@ -5235,7 +5246,7 @@ function renderHoldings() {
   if (hintEl) hintEl.innerHTML = hintRows;
 
   wrap.innerHTML = `
-    <table class="data-table" style="width:100%;font-size:12px;table-layout:fixed;">
+    <table class="data-table" id="holdingsTable" style="width:100%;font-size:12px;table-layout:fixed;">
       <colgroup>
         <col style="width:80px">
         <col style="width:auto">
