@@ -5210,20 +5210,22 @@ function renderHoldings() {
       ? `<span class="${totalReturn >= 0 ? 'stat-positive' : 'stat-negative'}" style="font-size:12px;">${totalReturn >= 0 ? '+' : ''}S$${formatNum(totalReturn.toFixed(2))}</span>`
       : '<span style="color:var(--text-muted);font-size:11px;">—</span>';
 
-    const mob = window.innerWidth <= 480;
     return `
       <tr class="holdings-row-clickable ${p.delisted ? 'delisted' : ''}" onclick="showStockDetail('${escapeAttr(p.code)}')" title="Click to view ${escapeAttr(p.name)} detail">
-        <td style="font-size:11.5px;font-family:var(--font-mono);color:var(--blue-700);">${escapeHtml(p.code)}</td>
-        <td style="font-size:12px;">${escapeHtml(p.name)}<br><span style="font-size:10px;color:var(--text-muted);">${escapeHtml(p.sector || p.type)}</span></td>
-        <td><span class="badge badge-${badgeKey(p.type)}" style="font-size:10px;">${p.type}</span></td>
-        <td class="numeric" style="font-size:12px;">${formatNum(p.qty)}</td>
-        ${mob ? '' : `<td class="numeric" style="font-size:11.5px;">${currencySymbol(p.currency)}${p.avgCost.toFixed(2)}</td>`}
+        <td style="font-size:11.5px;font-family:var(--font-mono);color:var(--blue-700);white-space:nowrap;">${escapeHtml(p.code)}</td>
+        <td style="font-size:12px;min-width:120px;">
+          <span class="badge badge-${badgeKey(p.type)}" style="font-size:9px;margin-bottom:2px;display:inline-block;">${p.type}</span><br>
+          ${escapeHtml(p.name)}<br>
+          <span style="font-size:10px;color:var(--text-muted);">${escapeHtml(p.sector || '')}</span>
+        </td>
+        <td class="numeric" style="font-size:12px;white-space:nowrap;">${formatNum(p.qty)}</td>
+        <td class="numeric" style="font-size:11.5px;white-space:nowrap;">${currencySymbol(p.currency)}${p.avgCost.toFixed(2)}</td>
         <td class="numeric" onclick="event.stopPropagation()">${priceCell}</td>
         <td class="numeric">${valueCell}</td>
         <td class="numeric">${plCell}</td>
-        ${mob ? '' : `<td class="numeric">${divsCell}</td>`}
-        ${mob ? '' : `<td class="numeric">${totalCell}</td>`}
-        ${mob ? '' : `<td class="numeric" style="font-size:11px;color:var(--text-muted);">${weight.toFixed(1)}%</td>`}
+        <td class="numeric">${divsCell}</td>
+        <td class="numeric">${totalCell}</td>
+        <td class="numeric" style="font-size:11px;color:var(--text-muted);white-space:nowrap;">${weight.toFixed(1)}%</td>
       </tr>
     `;
   }).join('');
@@ -5246,41 +5248,38 @@ function renderHoldings() {
   const hintEl = document.getElementById('holdingsSearchHint');
   if (hintEl) hintEl.innerHTML = hintRows;
 
-  const isMobile = window.innerWidth <= 480;
   wrap.innerHTML = `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
-    <table class="data-table" id="holdingsTable" style="width:100%;font-size:12px;table-layout:fixed;">
+    <table class="data-table" id="holdingsTable" style="min-width:720px;font-size:12px;table-layout:fixed;">
       <colgroup>
-        <col style="width:80px">
-        <col style="width:auto">
-        <col style="width:52px">
-        <col style="width:60px">
-        ${isMobile ? '' : '<col style="width:72px">'}
-        <col style="width:${isMobile ? '90' : '90'}px">
         <col style="width:82px">
+        <col style="width:160px">
+        <col style="width:58px">
+        <col style="width:72px">
+        <col style="width:90px">
         <col style="width:82px">
-        ${isMobile ? '' : '<col style="width:82px">'}
-        ${isMobile ? '' : '<col style="width:72px">'}
-        ${isMobile ? '' : '<col style="width:56px">'}
+        <col style="width:90px">
+        <col style="width:82px">
+        <col style="width:72px">
+        <col style="width:56px">
       </colgroup>
       <thead>
         <tr style="font-size:10.5px;">
           <th ${si('code')}>Ticker${sicon('code')}</th>
           <th ${si('name')}>Name${sicon('name')}</th>
-          <th>Type</th>
           <th class="numeric" ${si('qty')}>Qty${sicon('qty')}</th>
-          ${isMobile ? '' : `<th class="numeric">Avg cost</th>`}
+          <th class="numeric">Avg cost</th>
           <th class="numeric">Last price</th>
           <th class="numeric" ${si('value')}>Value${sicon('value')}</th>
           <th class="numeric" ${si('pl')}>Unreal. P/L${sicon('pl')}</th>
-          ${isMobile ? '' : `<th class="numeric" ${si('divs')}>Divs rcvd${sicon('divs')}</th>`}
-          ${isMobile ? '' : `<th class="numeric" ${si('total')}>Total return${sicon('total')}</th>`}
-          ${isMobile ? '' : `<th class="numeric" ${si('weight')}>Wt%${sicon('weight')}</th>`}
+          <th class="numeric" ${si('divs')}>Divs rcvd${sicon('divs')}</th>
+          <th class="numeric" ${si('total')}>Total return${sicon('total')}</th>
+          <th class="numeric" ${si('weight')}>Wt%${sicon('weight')}</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
     <div style="font-size:11px;color:var(--text-muted);padding:8px 2px 0;">
-      Click any column header to sort · Click any row to open stock detail
+      Scroll right to see all columns · Click header to sort · Click row to open detail
     </div>
   </div>`;
 }
@@ -6566,11 +6565,11 @@ function renderTransactions() {
     return `
       <tr>
         <td style="font-size:11.5px;white-space:nowrap;">${t.date || '—'}</td>
-        <td>
+        <td style="min-width:120px;">
+          <span class="badge badge-${badgeKey(t.type)}" style="font-size:9px;display:inline-block;margin-bottom:2px;">${t.kind || t.type}</span><br>
           <span style="font-family:var(--font-mono);font-size:11px;color:var(--blue-700);">${escapeHtml(t.code)}</span><br>
           <span style="font-size:11px;color:var(--text-muted);">${escapeHtml(t.name)}</span>
         </td>
-        <td><span class="badge badge-${badgeKey(t.type)}" style="font-size:10px;">${t.kind || t.type}</span></td>
         <td class="numeric" style="font-size:11.5px;">${detail}</td>
         <td class="numeric" style="font-size:11.5px;font-weight:600;">${amount}</td>
         <td style="white-space:nowrap;">
@@ -6581,19 +6580,17 @@ function renderTransactions() {
     `;
   }).join('');
   wrap.innerHTML = `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
-    <table class="data-table" style="width:100%;table-layout:fixed;">
+    <table class="data-table" style="min-width:480px;table-layout:fixed;">
       <colgroup>
         <col style="width:90px">
         <col style="width:auto">
-        <col style="width:72px">
-        <col style="width:120px">
-        <col style="width:90px">
+        <col style="width:130px">
+        <col style="width:100px">
         <col style="width:52px">
       </colgroup>
       <thead><tr style="font-size:11px;">
         <th>Date</th>
         <th>Counter</th>
-        <th>Kind</th>
         <th class="numeric">Detail</th>
         <th class="numeric">Amount</th>
         <th></th>
