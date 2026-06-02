@@ -4814,7 +4814,7 @@ function updateCounts() {
   const fixed = computeFixedIncome();
   if (els.cntHoldings) els.cntHoldings.textContent = positions.length;
   if (els.cntFixed)    els.cntFixed.textContent    = fixed.ssb.length + fixed.tbills.length + fixed.bonds.length;
-  if (els.cntTx)       els.cntTx.textContent       = state.transactions.length;
+  if (els.cntTx)       els.cntTx.textContent       = state.transactions.filter(t => t.type !== 'Global').length;
 }
 
 function updateFxPill() {
@@ -5864,26 +5864,27 @@ function renderCashflow() {
 
   const kpiEl = document.getElementById('cashflowKpis');
   if (kpiEl) {
+    const fmt = (n) => n >= 100000 ? formatNum(Math.round(n)) : formatNum(n.toFixed(2));
     kpiEl.innerHTML = `
       <div class="kpi-card featured">
         <div class="kpi-label">Net capital deployed</div>
-        <div class="kpi-value">S$${formatNum(net.toFixed(2))}</div>
+        <div class="kpi-value">S$${fmt(net)}</div>
         <div class="kpi-sub">Total deposited minus total withdrawn</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Total deposited</div>
-        <div class="kpi-value">S$${formatNum(totalIn.toFixed(2))}</div>
+        <div class="kpi-value">S$${fmt(totalIn)}</div>
         <div class="kpi-sub">${sorted.filter(c => c.direction === 'Inflow').length} deposit entries</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Total withdrawn</div>
-        <div class="kpi-value">S$${formatNum(totalOut.toFixed(2))}</div>
+        <div class="kpi-value">S$${fmt(totalOut)}</div>
         <div class="kpi-sub">${sorted.filter(c => c.direction === 'Outflow').length} withdrawal entries</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">${thisYear} net deposits</div>
-        <div class="kpi-value ${ytdIn - ytdOut >= 0 ? 'stat-positive' : 'stat-negative'}">S$${formatNum((ytdIn - ytdOut).toFixed(2))}</div>
-        <div class="kpi-sub">In S$${formatNum(ytdIn.toFixed(2))} · Out S$${formatNum(ytdOut.toFixed(2))}</div>
+        <div class="kpi-value ${ytdIn - ytdOut >= 0 ? 'stat-positive' : 'stat-negative'}">S$${fmt(ytdIn - ytdOut)}</div>
+        <div class="kpi-sub">In S$${fmt(ytdIn)} · Out S$${fmt(ytdOut)}</div>
       </div>
     `;
   }
@@ -6536,18 +6537,21 @@ window.deleteAllSellsForCode = deleteAllSellsForCode;
 
 
 function renderTransactions() {
+  // Global transactions are shown only in the Global tab — exclude here
+  const baseTxs = state.transactions.filter(t => t.type !== 'Global');
+
   const search = (document.getElementById('txSearch')?.value || '').toLowerCase();
   const typeFilter = document.getElementById('txTypeFilter')?.value || 'all';
   const yearFilter = document.getElementById('txYearFilter')?.value || 'all';
 
   const yearSel = document.getElementById('txYearFilter');
   if (yearSel) {
-    const years = [...new Set(state.transactions.map(t => t.date?.slice(0, 4)).filter(Boolean))].sort().reverse();
+    const years = [...new Set(baseTxs.map(t => t.date?.slice(0, 4)).filter(Boolean))].sort().reverse();
     const cur = yearSel.value;
     yearSel.innerHTML = `<option value="all">All years</option>` + years.map(y => `<option ${y === cur ? 'selected' : ''}>${y}</option>`).join('');
   }
 
-  let filtered = state.transactions.slice();
+  let filtered = baseTxs.slice();
   if (typeFilter !== 'all') filtered = filtered.filter(t => t.kind === typeFilter);
   if (yearFilter !== 'all') filtered = filtered.filter(t => t.date?.startsWith(yearFilter));
   if (search) filtered = filtered.filter(t =>
@@ -6560,7 +6564,7 @@ function renderTransactions() {
   const wrap = document.getElementById('txTableWrap');
   if (!wrap) return;
   if (filtered.length === 0) {
-    wrap.innerHTML = emptyTable('No transactions', state.transactions.length === 0 ? 'Add transactions or import an Excel file.' : 'No transactions match your filters.');
+    wrap.innerHTML = emptyTable('No transactions', baseTxs.length === 0 ? 'Add transactions or import an Excel file.' : 'No transactions match your filters.');
     return;
   }
   const rows = filtered.map(t => {
