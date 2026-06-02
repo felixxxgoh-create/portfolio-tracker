@@ -4792,19 +4792,19 @@ function switchTab(panel) {
 }
 window.switchTab = switchTab;
 
-function rerenderAll() {
+function rerenderAll(force = false) {
   renderSession();
   updateCounts();
   updateFxPill();
   updateLastSync();
-  if (state.activeTab === 'dashboard') renderDashboard();
-  if (state.activeTab === 'holdings') renderHoldings();
-  if (state.activeTab === 'fixed-income') renderFixedIncome();
-  if (state.activeTab === 'dividends') { renderDividends(false); populateDivAddForm(); }
-  if (state.activeTab === 'cashflow') renderCashflow();
-  if (state.activeTab === 'sold') renderSold();
-  if (state.activeTab === 'add') renderTransactions();
-  if (state.activeTab === 'transactions') renderTransactions(); // legacy guard
+  if (force || state.activeTab === 'dashboard')    renderDashboard();
+  if (force || state.activeTab === 'holdings')     renderHoldings();
+  if (force || state.activeTab === 'fixed-income') renderFixedIncome();
+  if (force || state.activeTab === 'dividends')    { renderDividends(false); populateDivAddForm(); }
+  if (force || state.activeTab === 'cashflow')     renderCashflow();
+  if (force || state.activeTab === 'sold')         renderSold();
+  if (force || state.activeTab === 'add')          renderTransactions();
+  if (force || state.activeTab === 'global')       renderGlobal();
 }
 
 function updateCounts() {
@@ -5345,6 +5345,9 @@ function renderFixedIncome() {
       <td class="numeric bold">S$${formatNum(s.faceValue)}</td>
       <td class="numeric">${s.avgRate ? s.avgRate.toFixed(2) + '%' : '—'}</td>
       <td class="numeric">S$${formatNum(s.annualInterest.toFixed(2))}</td>
+      <td style="white-space:nowrap;">
+        <button class="delete-btn" onclick="deleteFixedIncomeTxs('${escapeAttr(s.code)}','SSB')" title="Delete all transactions for this SSB">×</button>
+      </td>
     </tr>
   `).join('');
 
@@ -5352,6 +5355,7 @@ function renderFixedIncome() {
     <th>Code</th><th>Issue</th><th>Funding</th>
     <th class="numeric">Issued</th><th class="numeric">Matures</th>
     <th class="numeric">Face value</th><th class="numeric">Avg rate</th><th class="numeric">Annual income</th>
+    <th></th>
   </tr></thead>`;
 
   // ── Helper to build bond rows ─────────────────────────────────────────
@@ -5365,6 +5369,9 @@ function renderFixedIncome() {
       <td class="numeric">${b.maturityDate || '—'}</td>
       <td class="numeric bold">S$${formatNum(b.faceValueTotalSGD.toFixed(2))}</td>
       <td class="numeric">${currencySymbol(b.currency)}${formatNum(b.annualCouponLocal.toFixed(2))}</td>
+      <td style="white-space:nowrap;">
+        <button class="delete-btn" onclick="deleteFixedIncomeTxs('${escapeAttr(b.code)}','Bond')" title="Delete all transactions for this bond">×</button>
+      </td>
     </tr>
   `).join('');
 
@@ -5373,6 +5380,7 @@ function renderFixedIncome() {
     <th class="numeric">Units</th><th class="numeric">Coupon</th>
     <th class="numeric">Call</th><th class="numeric">Maturity</th>
     <th class="numeric">Face (SGD)</th><th class="numeric">Annual coupon</th>
+    <th></th>
   </tr></thead>`;
 
   // ── Group helper for by-holder view ───────────────────────────────────
@@ -5418,6 +5426,9 @@ function renderFixedIncome() {
             <td class="numeric bold">S$${formatNum(s.faceValue)}</td>
             <td class="numeric">${s.avgRate ? s.avgRate.toFixed(2) + '%' : '—'}</td>
             <td class="numeric">S$${formatNum(s.annualInterest.toFixed(2))}</td>
+            <td style="white-space:nowrap;">
+              <button class="delete-btn" onclick="deleteFixedIncomeTxs('${escapeAttr(s.code)}','SSB')" title="Delete all transactions for this SSB">×</button>
+            </td>
           </tr>
         `;
       }).join('');
@@ -6230,7 +6241,7 @@ function renderGlobal() {
     if (g.allTxs.length === 0) {
       lWrap.innerHTML = emptyTable('No transactions yet', '');
     } else {
-      const kindLabel = k => ({ Buy:'Buy', Sell:'Sell', Premium:'Option premium', PutAssigned:'Put assigned', CallAssigned:'Call assigned' }[k] || k);
+      const kindLabel = k => ({ Buy:'Buy', Sell:'Sell', Premium:'Option premium', PutAssigned:'Put assigned', CallAssigned:'Call assigned', Div:'Dividend', CapReduct:'Cap reduction' }[k] || k);
       const rows = g.allTxs.slice().sort((a,b) => b.date.localeCompare(a.date)).map(tx => {
         const sym = currencySymbol(tx.currency);
         const amt = tx.kind === 'Premium' ? `${sym}${formatNum((tx.premiumCollected||0).toFixed(2))} premium`
@@ -6238,21 +6249,25 @@ function renderGlobal() {
           : tx.kind === 'CallAssigned' ? `${formatNum(tx.quantity)} @ ${sym}${(tx.price||0).toFixed(2)} + ${sym}${formatNum((tx.premiumCollected||0).toFixed(2))} prem`
           : `${formatNum(tx.quantity||0)} @ ${sym}${(tx.price||0).toFixed(2)}`;
         return `<tr>
-          <td style="font-size:12px;">${tx.date}</td>
-          <td><span style="font-family:var(--font-mono);font-size:11px;color:var(--blue-700);">${escapeHtml(tx.code)}</span><br><span style="font-size:11px;color:var(--text-muted);">${escapeHtml(tx.name)}</span></td>
-          <td><span class="badge badge-Stock" style="font-size:10px;">${kindLabel(tx.kind)}</span></td>
-          <td class="numeric" style="font-size:12px;">${amt}</td>
+          <td style="font-size:12px;white-space:nowrap;">${tx.date}</td>
+          <td style="min-width:130px;">
+            <span class="badge badge-Stock" style="font-size:9px;display:inline-block;margin-bottom:2px;">${kindLabel(tx.kind)}</span><br>
+            <span style="font-family:var(--font-mono);font-size:11px;color:var(--blue-700);">${escapeHtml(tx.code)}</span><br>
+            <span style="font-size:11px;color:var(--text-muted);">${escapeHtml(tx.name)}</span>
+          </td>
+          <td class="numeric" style="font-size:12px;white-space:nowrap;">${amt}</td>
           <td style="white-space:nowrap;">
             <button class="price-edit-btn" onclick="editGlobalTx('${escapeAttr(tx.id)}')" title="Edit">✎</button>
             <button class="delete-btn" onclick="removeGlobalTx('${escapeAttr(tx.id)}')" title="Delete">×</button>
           </td>
         </tr>`;
       }).join('');
-      lWrap.innerHTML = `<table class="data-table" style="width:100%;table-layout:fixed;">
-        <colgroup><col style="width:90px"><col style="width:auto"><col style="width:100px"><col style="width:150px"><col style="width:56px"></colgroup>
-        <thead><tr style="font-size:11px;"><th>Date</th><th>Counter</th><th>Kind</th><th class="numeric">Detail</th><th></th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>`;
+      lWrap.innerHTML = `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+        <table class="data-table" style="min-width:400px;">
+          <thead><tr style="font-size:11px;"><th>Date</th><th>Counter</th><th class="numeric">Detail</th><th></th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
     }
   }
 }
@@ -7959,6 +7974,7 @@ function _driveUpdateUI(signedIn) {
 
 async function driveSave() {
   if (!localStorage.getItem(DRIVE_CLIENT_KEY)) { driveShowSetup(); return; }
+  if (!confirm('Overwrite Google Drive backup?\n\nThis will replace the file currently saved on your Drive with your local data. If you have unsaved changes on another device, they will be lost.\n\nProceed?')) return;
   if (!_gDriveToken) {
     // Need to sign in first — token client will call back into driveSave after auth
     if (!_gTokenClient) { driveInit(); setTimeout(driveSave, 1500); return; }
@@ -8058,7 +8074,7 @@ async function driveLoad() {
     const data = await dlResp.json();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     loadState();
-    rerenderAll();
+    rerenderAll(true);
     toast('success', `Loaded from Google Drive ✓ &nbsp; <span style="opacity:.7;font-size:12px;">Saved ${modTime}</span>`);
   } catch (err) {
     toast('error', 'Drive load failed: ' + err.message);
@@ -8158,7 +8174,18 @@ function clearPriceApiKey() {
 }
 window.clearPriceApiKey = clearPriceApiKey;
 
+function deleteFixedIncomeTxs(code, type) {
+  const count = state.transactions.filter(t => t.code === code && t.type === type).length;
+  if (!confirm(`Delete all ${count} transaction(s) for ${code}? This cannot be undone.`)) return;
+  state.transactions = state.transactions.filter(t => !(t.code === code && t.type === type));
+  saveState();
+  renderFixedIncome();
+  toast('success', `Deleted ${count} transaction(s) for <strong>${escapeHtml(code)}</strong>`);
+}
+window.deleteFixedIncomeTxs = deleteFixedIncomeTxs;
+
 function driveShowSetup() {
+  const existingId = localStorage.getItem(DRIVE_CLIENT_KEY) || '';
   showModal({
     header: `<div>
       <h2>Google Drive sync setup</h2>
