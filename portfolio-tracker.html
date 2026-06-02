@@ -2160,8 +2160,11 @@ input::placeholder { color: var(--text-muted); }
   .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; gap: 0; }
   .tab  { white-space: nowrap; flex-shrink: 0; font-size: 12px; padding: 10px 11px; }
 
-  /* ── KPI cards ── */
-  .kpi-row { display: flex !important; flex-direction: column !important; gap: 8px; }
+  /* ── Cashflow KPI: smaller font to fit large SGD amounts ── */
+  #cashflowKpis .kpi-value { font-size: 15px; }
+  #cashflowKpis .kpi-card.featured .kpi-value { font-size: 15px; }
+  #globalKpiRow .kpi-value { font-size: 15px; }
+  #globalKpiRow .kpi-card.featured .kpi-value { font-size: 15px; }
   .kpi-card { padding: 14px 14px; width: 100%; }
   .kpi-card.featured { grid-column: unset; }
   .kpi-label { font-size: 10px; }
@@ -5864,7 +5867,7 @@ function renderCashflow() {
 
   const kpiEl = document.getElementById('cashflowKpis');
   if (kpiEl) {
-    const fmt = (n) => n >= 100000 ? formatNum(Math.round(n)) : formatNum(n.toFixed(2));
+    const fmt = (n) => n >= 1000000 ? formatNum(Math.round(n)) : formatNum(n.toFixed(2));
     kpiEl.innerHTML = `
       <div class="kpi-card featured">
         <div class="kpi-label">Net capital deployed</div>
