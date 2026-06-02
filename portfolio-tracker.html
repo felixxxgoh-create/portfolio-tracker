@@ -4436,10 +4436,12 @@ function importJson(file) {
       state.fx            = data.fx            || { rate: 1.35, lastUpdated: null };
       state.snapshots     = data.snapshots     || [];
       state.manualEntries = data.manualEntries || [];
+      state.cashFlows     = data.cashFlows     || [];
+      state.accounts      = data.accounts      || ['DBS Treasures', 'Felix CDP', 'Joyce CDP'];
       rebuildIndex();
       saveState();
-      rerenderAll();
-      toast('success', `Restored ${state.transactions.length} transactions`);
+      rerenderAll(true);
+      toast('success', `Restored ${state.transactions.length} transactions · ${state.cashFlows.length} cash flow entries`);
     } catch (err) {
       toast('error', `Import failed: ${escapeHtml(err.message)}`);
     }
