@@ -5314,30 +5314,34 @@ function renderFixedIncome() {
 
   const kpi = document.getElementById('fixedKpiRow');
   if (kpi) {
+    const mob = window.innerWidth <= 480;
+    const cardStyle = mob ? 'style="width:100%;box-sizing:border-box;"' : '';
+    const valStyle  = mob ? 'style="font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"' : '';
+    kpi.style.cssText = mob ? 'display:flex!important;flex-direction:column!important;gap:8px;' : '';
     kpi.innerHTML = `
-      <div class="kpi-card featured">
+      <div class="kpi-card featured" ${cardStyle}>
         <div class="kpi-label">Total fixed income</div>
-        <div class="kpi-value">S$${formatNum((totalSSB + totalTbill + totalBond).toFixed(2))}</div>
+        <div class="kpi-value" ${valStyle}>S$${formatNum((totalSSB + totalTbill + totalBond).toFixed(2))}</div>
         <div class="kpi-sub">All holders combined</div>
       </div>
-      <div class="kpi-card">
+      <div class="kpi-card" ${cardStyle}>
         <div class="kpi-label">SSB face value</div>
-        <div class="kpi-value">S$${formatNum(totalSSB.toFixed(2))}</div>
+        <div class="kpi-value" ${valStyle}>S$${formatNum(totalSSB.toFixed(2))}</div>
         <div class="kpi-sub">${fixed.ssbRows.length} issue×holder rows · S$${formatNum(srsAmount)} SRS</div>
       </div>
-      <div class="kpi-card">
+      <div class="kpi-card" ${cardStyle}>
         <div class="kpi-label">T-bills</div>
-        <div class="kpi-value">S$${formatNum(totalTbill.toFixed(2))}</div>
+        <div class="kpi-value" ${valStyle}>S$${formatNum(totalTbill.toFixed(2))}</div>
         <div class="kpi-sub">${fixed.tbills.length} active</div>
       </div>
-      <div class="kpi-card">
+      <div class="kpi-card" ${cardStyle}>
         <div class="kpi-label">Bonds (face value)</div>
-        <div class="kpi-value">S$${formatNum(totalBond.toFixed(2))}</div>
+        <div class="kpi-value" ${valStyle}>S$${formatNum(totalBond.toFixed(2))}</div>
         <div class="kpi-sub">${fixed.bonds.length} issues</div>
       </div>
-      <div class="kpi-card">
+      <div class="kpi-card" ${cardStyle}>
         <div class="kpi-label">Annual income</div>
-        <div class="kpi-value">S$${formatNum(totalIncome.toFixed(2))}</div>
+        <div class="kpi-value" ${valStyle}>S$${formatNum(totalIncome.toFixed(2))}</div>
         <div class="kpi-sub">SSB interest + bond coupons · all holders</div>
       </div>
     `;
