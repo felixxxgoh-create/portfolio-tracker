@@ -4906,10 +4906,14 @@ function renderDashboard() {
   if (kpiRow) {
     const realColor = totalRealizedSGD >= 0 ? 'stat-positive' : 'stat-negative';
     const realSign  = totalRealizedSGD >= 0 ? '+' : '';
+    const mob = window.innerWidth <= 480;
+    const cardStyle = mob ? 'style="width:100%;box-sizing:border-box;"' : '';
+    const valStyle  = mob ? 'style="font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"' : '';
+    kpiRow.style.cssText = mob ? 'display:flex!important;flex-direction:column!important;gap:8px;' : '';
     kpiRow.innerHTML = `
-      <div class="kpi-card featured">
+      <div class="kpi-card featured" ${cardStyle}>
         <div class="kpi-label">Total portfolio value</div>
-        <div class="kpi-value">S$${formatNum(grand.toFixed(2))}</div>
+        <div class="kpi-value" ${valStyle}>S$${formatNum(grand.toFixed(2))}</div>
         <div class="kpi-sub">
           ${positions.length + fixed.ssb.length + fixed.tbills.length + fixed.bonds.length} holdings ·
           <span class="kpi-delta ${unrealizedSGD >= 0 ? 'stat-positive' : 'stat-negative'}">
@@ -4918,26 +4922,26 @@ function renderDashboard() {
           </span>
         </div>
       </div>
-      <div class="kpi-card">
+      <div class="kpi-card" ${cardStyle}>
         <div class="kpi-label">Equities (live prices)</div>
-        <div class="kpi-value">S$${formatNum(pricedMV.toFixed(2))}</div>
+        <div class="kpi-value" ${valStyle}>S$${formatNum(pricedMV.toFixed(2))}</div>
         <div class="kpi-sub">${pricedPositions.length === positions.length
           ? positions.length + " positions · cost S$" + formatNum(equityCost.toFixed(2))
           : pricedPositions.length + " of " + positions.length + " priced · " + unpricedPositions.length + " need prices"}</div>
       </div>
-      <div class="kpi-card">
+      <div class="kpi-card" ${cardStyle}>
         <div class="kpi-label">Fixed income</div>
-        <div class="kpi-value">S$${formatNum(fixedTotal.toFixed(2))}</div>
+        <div class="kpi-value" ${valStyle}>S$${formatNum(fixedTotal.toFixed(2))}</div>
         <div class="kpi-sub">${fixedPct.toFixed(1)}% of portfolio · ${fixed.ssb.length} SSB · ${fixed.bonds.length} bonds</div>
       </div>
-      <div class="kpi-card">
+      <div class="kpi-card" ${cardStyle}>
         <div class="kpi-label">Income ${thisYear} YTD</div>
-        <div class="kpi-value">S$${formatNum(ytdIncome.toFixed(2))}</div>
+        <div class="kpi-value" ${valStyle}>S$${formatNum(ytdIncome.toFixed(2))}</div>
         <div class="kpi-sub">Dividends + coupons + SSB interest received</div>
       </div>
-      <div class="kpi-card">
+      <div class="kpi-card" ${cardStyle}>
         <div class="kpi-label">Realised P&amp;L</div>
-        <div class="kpi-value"><span class="${realColor}">${realSign}S$${formatNum(Math.abs(totalRealizedSGD).toFixed(2))}</span></div>
+        <div class="kpi-value" ${valStyle}><span class="${realColor}">${realSign}S$${formatNum(Math.abs(totalRealizedSGD).toFixed(2))}</span></div>
         <div class="kpi-sub">${winCount} winner${winCount !== 1 ? 's' : ''} · ${lossCount} loser${lossCount !== 1 ? 's' : ''} · closed trades</div>
       </div>
     `;
@@ -5868,25 +5872,29 @@ function renderCashflow() {
   const kpiEl = document.getElementById('cashflowKpis');
   if (kpiEl) {
     const fmt = (n) => n >= 1000000 ? formatNum(Math.round(n)) : formatNum(n.toFixed(2));
+    const mob = window.innerWidth <= 480;
+    const cardStyle = mob ? 'style="width:100%;box-sizing:border-box;"' : '';
+    const valStyle  = mob ? 'style="font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"' : '';
+    kpiEl.style.cssText = mob ? 'display:flex!important;flex-direction:column!important;gap:8px;' : '';
     kpiEl.innerHTML = `
-      <div class="kpi-card featured">
+      <div class="kpi-card featured" ${cardStyle}>
         <div class="kpi-label">Net capital deployed</div>
-        <div class="kpi-value">S$${fmt(net)}</div>
+        <div class="kpi-value" ${valStyle}>S$${fmt(net)}</div>
         <div class="kpi-sub">Total deposited minus total withdrawn</div>
       </div>
-      <div class="kpi-card">
+      <div class="kpi-card" ${cardStyle}>
         <div class="kpi-label">Total deposited</div>
-        <div class="kpi-value">S$${fmt(totalIn)}</div>
+        <div class="kpi-value" ${valStyle}>S$${fmt(totalIn)}</div>
         <div class="kpi-sub">${sorted.filter(c => c.direction === 'Inflow').length} deposit entries</div>
       </div>
-      <div class="kpi-card">
+      <div class="kpi-card" ${cardStyle}>
         <div class="kpi-label">Total withdrawn</div>
-        <div class="kpi-value">S$${fmt(totalOut)}</div>
+        <div class="kpi-value" ${valStyle}>S$${fmt(totalOut)}</div>
         <div class="kpi-sub">${sorted.filter(c => c.direction === 'Outflow').length} withdrawal entries</div>
       </div>
-      <div class="kpi-card">
+      <div class="kpi-card" ${cardStyle}>
         <div class="kpi-label">${thisYear} net deposits</div>
-        <div class="kpi-value ${ytdIn - ytdOut >= 0 ? 'stat-positive' : 'stat-negative'}">S$${fmt(ytdIn - ytdOut)}</div>
+        <div class="kpi-value ${ytdIn - ytdOut >= 0 ? 'stat-positive' : 'stat-negative'}" ${valStyle}>S$${fmt(ytdIn - ytdOut)}</div>
         <div class="kpi-sub">In S$${fmt(ytdIn)} · Out S$${fmt(ytdOut)}</div>
       </div>
     `;
@@ -6120,28 +6128,34 @@ function renderGlobal() {
   const totalMVeur = eurHoldings.filter(p => p.marketValue != null).reduce((a, p) => a + p.marketValue, 0);
 
   const kpi = document.getElementById('globalKpiRow');
-  if (kpi) kpi.innerHTML = `
-    <div class="kpi-card featured">
+  if (kpi) {
+    const mob = window.innerWidth <= 480;
+    const cardStyle = mob ? 'style="width:100%;box-sizing:border-box;"' : '';
+    const valStyle  = mob ? 'style="font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"' : '';
+    kpi.style.cssText = mob ? 'display:flex!important;flex-direction:column!important;gap:8px;' : '';
+    kpi.innerHTML = `
+    <div class="kpi-card featured" ${cardStyle}>
       <div class="kpi-label">USD holdings</div>
-      <div class="kpi-value">US$${formatNum(totalMVusd.toFixed(2))}</div>
+      <div class="kpi-value" ${valStyle}>US$${formatNum(totalMVusd.toFixed(2))}</div>
       <div class="kpi-sub">≈ S$${formatNum((totalMVusd * fxUSD).toFixed(0))}</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card" ${cardStyle}>
       <div class="kpi-label">EUR holdings</div>
-      <div class="kpi-value">€${formatNum(totalMVeur.toFixed(2))}</div>
+      <div class="kpi-value" ${valStyle}>€${formatNum(totalMVeur.toFixed(2))}</div>
       <div class="kpi-sub">≈ S$${formatNum((totalMVeur * fxEUR).toFixed(0))}</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card" ${cardStyle}>
       <div class="kpi-label">Option premiums</div>
-      <div class="kpi-value">S$${formatNum(totalPremiums.toFixed(2))}</div>
+      <div class="kpi-value" ${valStyle}>S$${formatNum(totalPremiums.toFixed(2))}</div>
       <div class="kpi-sub">All-time collected</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card" ${cardStyle}>
       <div class="kpi-label">Realised P/L</div>
-      <div class="kpi-value ${totalRealisedSGD >= 0 ? 'stat-positive' : 'stat-negative'}">${totalRealisedSGD >= 0 ? '+' : ''}S$${formatNum(totalRealisedSGD.toFixed(2))}</div>
+      <div class="kpi-value ${totalRealisedSGD >= 0 ? 'stat-positive' : 'stat-negative'}" ${valStyle}>${totalRealisedSGD >= 0 ? '+' : ''}S$${formatNum(totalRealisedSGD.toFixed(2))}</div>
       <div class="kpi-sub">Closed positions incl. premiums</div>
     </div>
   `;
+  }
 
   // ── Holdings table ────────────────────────────────────────────────────
   const hWrap = document.getElementById('globalHoldingsWrap');
