@@ -2612,34 +2612,7 @@ input::placeholder { color: var(--text-muted); }
     <section class="tab-panel" id="panel-global">
       <div class="kpi-row" id="globalKpiRow"></div>
 
-      <!-- Holdings -->
-      <section class="card">
-        <div class="card-header">
-          <h2>Current holdings</h2>
-          <p class="muted">Active positions on NYSE, NASDAQ, AMS and LSE. Option premiums collected reduce the effective cost basis shown.</p>
-        </div>
-        <div id="globalHoldingsWrap"></div>
-      </section>
-
-      <!-- Option premiums collected -->
-      <section class="card">
-        <div class="card-header">
-          <h2>Option premiums collected</h2>
-          <p class="muted">All option premium income received — from selling puts, covered calls, and other option strategies.</p>
-        </div>
-        <div id="globalOptionsWrap"></div>
-      </section>
-
-      <!-- Closed positions -->
-      <section class="card">
-        <div class="card-header">
-          <h2>Closed positions</h2>
-          <p class="muted">Fully exited positions. Realised P/L includes option premiums collected.</p>
-        </div>
-        <div id="globalClosedWrap"></div>
-      </section>
-
-      <!-- Add transaction -->
+      <!-- Add transaction — moved to top -->
       <section class="card" id="globalAddCard">
         <div class="card-header">
           <h2>Add transaction</h2>
@@ -2669,6 +2642,33 @@ input::placeholder { color: var(--text-muted); }
             </button>
           </div>
         </div>
+      </section>
+
+      <!-- Holdings -->
+      <section class="card">
+        <div class="card-header">
+          <h2>Current holdings</h2>
+          <p class="muted">Active positions on NYSE, NASDAQ, AMS and LSE. Option premiums collected reduce the effective cost basis shown.</p>
+        </div>
+        <div id="globalHoldingsWrap"></div>
+      </section>
+
+      <!-- Option premiums collected -->
+      <section class="card">
+        <div class="card-header">
+          <h2>Option premiums collected</h2>
+          <p class="muted">All option premium income received — from selling puts, covered calls, and other option strategies.</p>
+        </div>
+        <div id="globalOptionsWrap"></div>
+      </section>
+
+      <!-- Closed positions -->
+      <section class="card">
+        <div class="card-header">
+          <h2>Closed positions</h2>
+          <p class="muted">Fully exited positions. Realised P/L includes option premiums collected.</p>
+        </div>
+        <div id="globalClosedWrap"></div>
       </section>
 
       <!-- Full transaction log -->
@@ -6373,22 +6373,15 @@ function renderSold() {
 window.renderSold = renderSold;
 
 function showGlobalForm(kind) {
-  // Build stock search options from GLOBAL_DATABASE
-  const existingCodes = [...new Set(state.transactions.filter(t => t.type==='Global').map(t => t.code))];
-  const allOptions = GLOBAL_DATABASE.map(s =>
-    `<option value="${escapeAttr(s.ticker)}" data-currency="${s.currency}" data-exchange="${s.exchange}" data-name="${escapeAttr(s.name)}">${s.ticker} — ${s.name} (${s.exchange})</option>`
-  ).join('');
-
   const isPremiumOnly = kind === 'premium';
-  const isBuy   = kind === 'buy' || kind === 'put-assigned';
-  const isSell  = kind === 'sell' || kind === 'call-assigned';
-  const isAssigned = kind === 'put-assigned' || kind === 'call-assigned';
-
-  const kindLabel = { buy:'Buy', sell:'Sell', premium:'Option premium collected', 'put-assigned':'Put assigned — shares bought', 'call-assigned':'Call assigned — shares sold' }[kind];
-  const kindKey   = { buy:'Buy', sell:'Sell', premium:'Premium', 'put-assigned':'PutAssigned', 'call-assigned':'CallAssigned' }[kind];
+  const isAssigned    = kind === 'put-assigned' || kind === 'call-assigned';
+  const kindLabel = { buy:'Buy shares', sell:'Sell shares', premium:'Option premium collected',
+    'put-assigned':'Put assigned — shares bought', 'call-assigned':'Call assigned — shares sold' }[kind];
+  const kindKey = { buy:'Buy', sell:'Sell', premium:'Premium',
+    'put-assigned':'PutAssigned', 'call-assigned':'CallAssigned' }[kind];
 
   const qtyBlock = !isPremiumOnly ? `
-    <div class="field"><label>Shares ${isAssigned ? '(typically 100)' : ''}</label>
+    <div class="field"><label>Shares${isAssigned ? ' (typically 100)' : ''}</label>
     <input type="number" id="gf_qty" value="${isAssigned?100:''}" step="1" min="0" /></div>
     <div class="field"><label>Price per share</label>
     <input type="number" id="gf_price" step="0.001" min="0" /></div>
@@ -6404,11 +6397,21 @@ function showGlobalForm(kind) {
   showModal({
     header: `<div><h2>${kindLabel}</h2></div>`,
     body: `<div class="form-grid">
-      <div class="field full"><label>Stock / ETF</label>
-        <select id="gf_code" style="width:100%;" onchange="onGlobalStockChange()">
-          <option value="">— Select stock —</option>
-          ${allOptions}
-        </select>
+      <div class="field full">
+        <label>Stock / ETF — type ticker or name to search</label>
+        <input type="text" id="gf_search" placeholder="e.g. BABA, Alibaba, AAPL…"
+          autocomplete="off" spellcheck="false"
+          oninput="filterGlobalSearch()"
+          style="width:100%;margin-bottom:4px;"
+        />
+        <div id="gf_results" style="
+          max-height:180px;overflow-y:auto;border:1px solid var(--border);
+          border-radius:var(--radius);background:var(--bg-elevated);display:none;
+          font-size:12.5px;
+        "></div>
+        <input type="hidden" id="gf_code" />
+        <input type="hidden" id="gf_name" />
+        <div id="gf_selected" style="font-size:12px;color:var(--green-700);margin-top:4px;"></div>
       </div>
       <div class="field"><label>Date</label><input type="date" id="gf_date" value="${todayISO()}" /></div>
       <div class="field"><label>Currency</label>
@@ -6427,22 +6430,63 @@ function showGlobalForm(kind) {
       <button class="btn btn-primary" onclick="saveGlobalTx('${kindKey}')">Add transaction</button>
     `,
   });
-  setTimeout(() => document.getElementById('gf_code')?.focus(), 60);
+  setTimeout(() => document.getElementById('gf_search')?.focus(), 80);
 }
 window.showGlobalForm = showGlobalForm;
 
-function onGlobalStockChange() {
-  const sel = document.getElementById('gf_code');
-  const opt = sel?.options[sel.selectedIndex];
-  if (!opt || !opt.value) return;
-  const currency = opt.dataset.currency || 'USD';
-  const currSel = document.getElementById('gf_currency');
-  if (currSel) currSel.value = currency;
+function filterGlobalSearch() {
+  const q = (document.getElementById('gf_search')?.value || '').trim().toLowerCase();
+  const resultsEl = document.getElementById('gf_results');
+  if (!resultsEl) return;
+  if (!q) { resultsEl.style.display = 'none'; return; }
+
+  const matches = GLOBAL_DATABASE.filter(s =>
+    s.ticker.toLowerCase().includes(q) ||
+    s.name.toLowerCase().includes(q) ||
+    (s.short || '').toLowerCase().includes(q)
+  ).slice(0, 12);
+
+  if (matches.length === 0) {
+    resultsEl.innerHTML = '<div style="padding:10px 12px;color:var(--text-muted);">No matches — you can still type the ticker manually below</div>';
+    resultsEl.style.display = 'block';
+    return;
+  }
+
+  resultsEl.innerHTML = matches.map(s => `
+    <div onclick="selectGlobalStock('${escapeAttr(s.ticker)}','${escapeAttr(s.name)}','${escapeAttr(s.currency)}','${escapeAttr(s.exchange)}')"
+      style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border-soft);"
+      onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
+      <span style="font-family:var(--font-mono);font-size:12px;color:var(--blue-700);font-weight:600;">${escapeHtml(s.ticker)}</span>
+      <span style="color:var(--text-muted);font-size:11px;margin-left:6px;">${escapeHtml(s.exchange)}</span>
+      <span style="font-size:12.5px;margin-left:8px;">${escapeHtml(s.name)}</span>
+    </div>
+  `).join('');
+  resultsEl.style.display = 'block';
 }
-window.onGlobalStockChange = onGlobalStockChange;
+window.filterGlobalSearch = filterGlobalSearch;
+
+function selectGlobalStock(ticker, name, currency, exchange) {
+  document.getElementById('gf_code').value     = ticker;
+  document.getElementById('gf_name').value     = name;
+  document.getElementById('gf_search').value   = ticker + ' — ' + name;
+  document.getElementById('gf_currency').value = currency;
+  document.getElementById('gf_results').style.display = 'none';
+  document.getElementById('gf_selected').textContent  = '✓ ' + ticker + ' selected (' + exchange + ' · ' + currency + ')';
+}
+window.selectGlobalStock = selectGlobalStock;
 
 function saveGlobalTx(kindKey) {
-  const code     = document.getElementById('gf_code')?.value?.trim() || '';
+  // Code comes from hidden field (set by selectGlobalStock) or parse from search input
+  let code = (document.getElementById('gf_code')?.value || '').trim();
+  let name = (document.getElementById('gf_name')?.value || '').trim();
+  const searchVal = (document.getElementById('gf_search')?.value || '').trim();
+
+  // Allow manual entry: if no code selected but search has a value, use it as ticker
+  if (!code && searchVal) {
+    code = searchVal.split(' ')[0].toUpperCase();
+    name = code;
+  }
+
   const date     = document.getElementById('gf_date')?.value || '';
   const currency = document.getElementById('gf_currency')?.value || 'USD';
   const qty      = parseFloat(document.getElementById('gf_qty')?.value) || 0;
@@ -6451,14 +6495,14 @@ function saveGlobalTx(kindKey) {
   const premium  = parseFloat(document.getElementById('gf_premium')?.value) || 0;
   const notes    = document.getElementById('gf_notes')?.value || '';
 
-  if (!code) { toast('error', 'Please select a stock'); return; }
-  if (!date) { toast('error', 'Date is required'); return; }
+  if (!code) { toast('error', 'Please select or type a stock ticker'); return; }
+  if (!date)  { toast('error', 'Date is required'); return; }
   if (['Buy','Sell','PutAssigned','CallAssigned'].includes(kindKey) && qty <= 0) {
     toast('error', 'Shares must be greater than zero'); return;
   }
 
-  const dbEntry = GLOBAL_DATABASE.find(s => s.ticker === code);
-  const name = dbEntry?.name || code;
+  const dbEntry  = GLOBAL_DATABASE.find(s => s.ticker === code);
+  if (!name) name = dbEntry?.name || code;
   const exchange = dbEntry?.exchange || '';
 
   const tx = {
