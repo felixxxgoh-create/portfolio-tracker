@@ -2678,6 +2678,55 @@ input::placeholder { color: var(--text-muted); }
         </div>
         <div id="globalTxLogWrap"></div>
       </section>
+
+      <!-- Global cash flows (USD / EUR) -->
+      <section class="card">
+        <div class="card-header">
+          <h2>Cash flows — USD &amp; EUR</h2>
+          <p class="muted">Deposits and withdrawals in USD and EUR to/from your overseas brokerage accounts.</p>
+        </div>
+        <div style="background:var(--bg-subtle);border:1px solid var(--border-soft);border-radius:var(--radius);padding:16px 14px;margin-bottom:16px;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px;">Log a deposit or withdrawal</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;">
+            <div style="flex:0 0 auto;">
+              <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Date</label>
+              <input type="date" id="gcf_date" style="padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;background:white;" />
+            </div>
+            <div style="flex:0 0 auto;">
+              <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Type</label>
+              <div style="display:flex;gap:6px;">
+                <button id="gcf_inBtn" onclick="setGcfDir('Inflow')"
+                  style="padding:8px 14px;border-radius:var(--radius);border:2px solid var(--green-700);background:var(--green-700);color:white;font-size:13px;font-weight:600;cursor:pointer;">↓ Deposit</button>
+                <button id="gcf_outBtn" onclick="setGcfDir('Outflow')"
+                  style="padding:8px 14px;border-radius:var(--radius);border:2px solid var(--border);background:white;color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer;">↑ Withdrawal</button>
+              </div>
+              <input type="hidden" id="gcf_dir" value="Inflow" />
+            </div>
+            <div style="flex:0 0 auto;">
+              <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Currency</label>
+              <select id="gcf_currency" style="padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;background:white;">
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+              </select>
+            </div>
+            <div style="flex:1 1 120px;min-width:120px;">
+              <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Amount</label>
+              <input type="number" id="gcf_amount" step="0.01" min="0" placeholder="0.00"
+                style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;background:white;" />
+            </div>
+            <div style="flex:2 1 160px;">
+              <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Remarks (optional)</label>
+              <input type="text" id="gcf_remarks" placeholder="e.g. IBKR deposit"
+                style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;background:white;" />
+            </div>
+            <div style="flex:0 0 auto;">
+              <button onclick="addGlobalCashFlow()"
+                style="padding:8px 20px;background:var(--blue-900);color:white;border:none;border-radius:var(--radius);font-size:13px;font-weight:700;cursor:pointer;">Add</button>
+            </div>
+          </div>
+        </div>
+        <div id="globalCashflowWrap"></div>
+      </section>
     </section>
 
     <!-- ============== SOLD ============== -->
@@ -3361,6 +3410,7 @@ const state = {
   snapshots: [],             // [{ ts, totalSGD, byType: {Stock, REIT, ETF, SSB, Bond, Tbill} }]
   manualEntries: [],         // user-added manual instruments (kept in DB-like shape)
   cashFlows: [],             // funding ledger: deposits/withdrawals to/from brokerage account
+  globalCashFlows: [],       // USD/EUR cash flows for overseas accounts
   accounts: ['DBS Treasures', 'Felix CDP', 'Joyce CDP'],  // brokerage accounts (user can add more)
 
   // Ephemeral UI state
@@ -4366,6 +4416,7 @@ function saveState() {
       snapshots: state.snapshots,
       manualEntries: state.manualEntries,
       cashFlows: state.cashFlows,
+      globalCashFlows: state.globalCashFlows,
       accounts: state.accounts,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
@@ -4385,6 +4436,7 @@ function loadState() {
     state.snapshots      = data.snapshots      || [];
     state.manualEntries  = data.manualEntries  || [];
     state.cashFlows      = data.cashFlows      || [];
+    state.globalCashFlows = data.globalCashFlows || [];
     state.accounts       = data.accounts       || ['DBS Treasures', 'Felix CDP', 'Joyce CDP'];
     return true;
   } catch (e) {
@@ -4400,6 +4452,7 @@ function clearAllData() {
   state.snapshots = [];
   state.manualEntries = [];
   state.cashFlows = [];
+  state.globalCashFlows = [];
   state.accounts  = ['DBS Treasures', 'Felix CDP', 'Joyce CDP'];
   localStorage.removeItem(STORAGE_KEY);
   rebuildIndex();
@@ -4440,6 +4493,7 @@ function importJson(file) {
       state.snapshots     = data.snapshots     || [];
       state.manualEntries = data.manualEntries || [];
       state.cashFlows     = data.cashFlows     || [];
+      state.globalCashFlows = data.globalCashFlows || [];
       state.accounts      = data.accounts      || ['DBS Treasures', 'Felix CDP', 'Joyce CDP'];
       rebuildIndex();
       saveState();
@@ -5621,7 +5675,7 @@ function renderDividends(resetYearFilter = false) {
           </td>
         </tr>
       `).join('');
-      wrap.innerHTML = `
+      const tableHtml = `
         <div style="overflow-x:auto;"><table class="data-table">
           <thead><tr>
             <th>Date</th><th>Ticker</th><th>Name</th><th>Type</th>
@@ -5631,6 +5685,7 @@ function renderDividends(resetYearFilter = false) {
           <tbody>${rows}</tbody>
         </table></div>
       `;
+      wrap.innerHTML = collapsibleTable(tableHtml, 10, 'div_pay');
     }
   }
 
@@ -5940,7 +5995,7 @@ function renderCashflow() {
           </tr>
         `;
       }).join('');
-      wrap.innerHTML = `
+      const cfTableHtml = `
         <div style="overflow-x:auto;">
           <table class="data-table">
             <thead><tr>
@@ -5955,6 +6010,7 @@ function renderCashflow() {
           </table>
         </div>
       `;
+      wrap.innerHTML = collapsibleTable(cfTableHtml, 10, 'cf_entries');
     }
   }
 }
@@ -6117,6 +6173,9 @@ function computeGlobal() {
 }
 
 function renderGlobal() {
+  // Set default date on cash flow form if empty
+  const gcfDate = document.getElementById('gcf_date');
+  if (gcfDate && !gcfDate.value) gcfDate.value = todayISO();
   const g = computeGlobal();
   const fxUSD = toSGD(1, 'USD');
   const fxEUR = toSGD(1, 'EUR');
@@ -6230,10 +6289,11 @@ function renderGlobal() {
           </td>
         </tr>`;
       }).join('');
-      oWrap.innerHTML = `<div style="overflow-x:auto;"><table class="data-table">
+      const optTableHtml = `<div style="overflow-x:auto;"><table class="data-table">
         <thead><tr><th>Date</th><th>Ticker</th><th>Name</th><th>Type</th><th class="numeric">Premium</th><th>Notes</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
       </table></div>`;
+      oWrap.innerHTML = collapsibleTable(optTableHtml, 10, 'glob_opt');
     }
   }
 
@@ -6286,12 +6346,42 @@ function renderGlobal() {
           </td>
         </tr>`;
       }).join('');
-      lWrap.innerHTML = `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+      const txTableHtml = `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
         <table class="data-table" style="min-width:400px;">
           <thead><tr style="font-size:11px;"><th>Date</th><th>Counter</th><th class="numeric">Detail</th><th></th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>`;
+      lWrap.innerHTML = collapsibleTable(txTableHtml, 10, 'glob_tx');
+    }
+  }
+
+  // ── Global cash flows ────────────────────────────────────────────────
+  const gcfWrap = document.getElementById('globalCashflowWrap');
+  if (gcfWrap) {
+    const gcf = (state.globalCashFlows || []).slice().sort((a,b) => b.date.localeCompare(a.date));
+    if (gcf.length === 0) {
+      gcfWrap.innerHTML = emptyTable('No cash flow entries yet', 'Send your USD/EUR deposit and withdrawal records to have them imported.');
+    } else {
+      const rows = gcf.map(c => {
+        const isIn = c.direction === 'Inflow';
+        const sym = c.currency === 'EUR' ? '€' : 'US$';
+        return `<tr>
+          <td style="font-size:12px;white-space:nowrap;">${c.date}</td>
+          <td><span class="badge" style="${isIn ? 'background:var(--green-100);color:var(--green-700)' : 'background:var(--red-100);color:var(--red-700)'}">${isIn ? '↓ Deposit' : '↑ Withdrawal'}</span></td>
+          <td><span class="global-tag-${c.currency === 'EUR' ? 'eur' : 'usd'}">${c.currency}</span></td>
+          <td class="numeric bold ${isIn ? 'stat-positive' : 'stat-negative'}">${isIn ? '+' : '−'}${sym}${formatNum(c.amount.toFixed(2))}</td>
+          <td style="font-size:11px;color:var(--text-muted);">${escapeHtml(c.remarks || '')}</td>
+          <td style="white-space:nowrap;">
+            <button class="delete-btn" onclick="removeGlobalCashFlow('${escapeAttr(c.id)}')" title="Delete">×</button>
+          </td>
+        </tr>`;
+      }).join('');
+      const gcfHtml = `<div style="overflow-x:auto;"><table class="data-table">
+        <thead><tr><th>Date</th><th>Type</th><th>Currency</th><th class="numeric">Amount</th><th>Remarks</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>`;
+      gcfWrap.innerHTML = collapsibleTable(gcfHtml, 10, 'glob_cf');
     }
   }
 }
@@ -6361,7 +6451,7 @@ function renderSold() {
       </td>
     </tr>
   `).join('');
-  wrap.innerHTML = `<div style="overflow-x:auto;"><table class="data-table">
+  const soldTableHtml = `<div style="overflow-x:auto;"><table class="data-table">
     <thead><tr>
       <th>Ticker</th><th>Name</th><th>Type</th>
       <th>First buy</th><th>Last sell</th>
@@ -6369,6 +6459,7 @@ function renderSold() {
     </tr></thead>
     <tbody>${rows}</tbody>
   </table></div>`;
+  wrap.innerHTML = collapsibleTable(soldTableHtml, 10, 'sold_rows');
 }
 window.renderSold = renderSold;
 
@@ -6665,7 +6756,7 @@ function renderTransactions() {
       </tr>
     `;
   }).join('');
-  wrap.innerHTML = `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+  const txTableHtml = `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
     <table class="data-table" style="min-width:480px;table-layout:fixed;">
       <colgroup>
         <col style="width:90px">
@@ -6684,6 +6775,7 @@ function renderTransactions() {
       <tbody>${rows}</tbody>
     </table>
   </div>`;
+  wrap.innerHTML = collapsibleTable(txTableHtml, 10, 'tx_log');
 }
 
 /* =====================================================================
@@ -8255,6 +8347,51 @@ function deleteFixedIncomeTxs(code, type) {
 }
 window.deleteFixedIncomeTxs = deleteFixedIncomeTxs;
 
+// ── Collapse/expand helper ─────────────────────────────────────────────
+function collapsibleTable(tableHtml, limit = 10, wrapId = '') {
+  const allRows = [...tableHtml.matchAll(/<tr[\s\S]*?<\/tr>/g)].map(m => m[0]);
+  if (allRows.length <= limit) return tableHtml;
+
+  const id = wrapId || ('coll_' + Math.random().toString(36).slice(2, 7));
+  const thead = tableHtml.match(/<thead>[\s\S]*?<\/thead>/)?.[0] || '';
+  const tableOpen = tableHtml.match(/<table[^>]*>/)?.[0] || '<table>';
+  const preTable = tableHtml.slice(0, tableHtml.indexOf('<table'));
+  const remaining = allRows.length - limit;
+
+  const visibleRows = allRows.slice(0, limit).join('');
+  const hiddenRows  = allRows.slice(limit).join('');
+
+  const toggleBtn = (pos) => `
+    <div style="text-align:right;padding:${pos==='top'?'0 0 8px':'8px 0 2px'};">
+      <button id="${id}_btn${pos}" onclick="toggleCollapse('${id}','${remaining}')"
+        style="background:none;border:1px solid var(--border);border-radius:20px;
+               padding:5px 16px;font-size:12px;color:var(--text-muted);cursor:pointer;">
+        ▼ Show ${remaining} more
+      </button>
+    </div>`;
+
+  return `${preTable}
+    ${toggleBtn('top')}
+    <table ${tableOpen.replace('<table','').replace('>','')}>
+      ${thead}
+      <tbody id="${id}_vis">${visibleRows}</tbody>
+      <tbody id="${id}_hid" style="display:none;">${hiddenRows}</tbody>
+    </table>`;
+}
+
+function toggleCollapse(id, remaining) {
+  const hid  = document.getElementById(id + '_hid');
+  const btnT = document.getElementById(id + '_btntop');
+  const btnB = document.getElementById(id + '_btnbottom');
+  if (!hid) return;
+  const expanded = hid.style.display !== 'none';
+  hid.style.display = expanded ? 'none' : '';
+  const label = expanded ? `▼ Show ${remaining} more` : '▲ Show less';
+  if (btnT) btnT.textContent = label;
+  if (btnB) btnB.textContent = label;
+}
+window.toggleCollapse = toggleCollapse;
+
 function driveShowSetup() {
   const existingId = localStorage.getItem(DRIVE_CLIENT_KEY) || '';
   showModal({
@@ -8311,6 +8448,57 @@ function driveShowSetup() {
   setTimeout(() => document.getElementById('driveClientIdInput')?.focus(), 80);
 }
 window.driveShowSetup = driveShowSetup;
+
+function removeGlobalCashFlow(id) {
+  if (!confirm('Delete this cash flow entry?')) return;
+  state.globalCashFlows = (state.globalCashFlows || []).filter(c => c.id !== id);
+  saveState();
+  renderGlobal();
+}
+window.removeGlobalCashFlow = removeGlobalCashFlow;
+
+function setGcfDir(dir) {
+  document.getElementById('gcf_dir').value = dir;
+  const inBtn  = document.getElementById('gcf_inBtn');
+  const outBtn = document.getElementById('gcf_outBtn');
+  if (dir === 'Inflow') {
+    inBtn.style.cssText  = 'padding:8px 14px;border-radius:var(--radius);border:2px solid var(--green-700);background:var(--green-700);color:white;font-size:13px;font-weight:600;cursor:pointer;';
+    outBtn.style.cssText = 'padding:8px 14px;border-radius:var(--radius);border:2px solid var(--border);background:white;color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer;';
+  } else {
+    outBtn.style.cssText = 'padding:8px 14px;border-radius:var(--radius);border:2px solid var(--red-700);background:var(--red-700);color:white;font-size:13px;font-weight:600;cursor:pointer;';
+    inBtn.style.cssText  = 'padding:8px 14px;border-radius:var(--radius);border:2px solid var(--border);background:white;color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer;';
+  }
+}
+window.setGcfDir = setGcfDir;
+
+function addGlobalCashFlow() {
+  const date     = document.getElementById('gcf_date')?.value || '';
+  const dir      = document.getElementById('gcf_dir')?.value  || 'Inflow';
+  const currency = document.getElementById('gcf_currency')?.value || 'USD';
+  const amount   = parseFloat(document.getElementById('gcf_amount')?.value) || 0;
+  const remarks  = document.getElementById('gcf_remarks')?.value || '';
+
+  if (!date)       { toast('error', 'Date is required'); return; }
+  if (amount <= 0) { toast('error', 'Amount must be greater than zero'); return; }
+
+  const sym = currency === 'EUR' ? '€' : 'US$';
+  if (!state.globalCashFlows) state.globalCashFlows = [];
+  state.globalCashFlows.push({
+    id: 'gcf_' + Math.random().toString(36).slice(2, 9),
+    addedAt: new Date().toISOString(),
+    date, direction: dir, currency, amount, remarks,
+  });
+  state.globalCashFlows.sort((a,b) => a.date.localeCompare(b.date));
+  saveState();
+
+  // Reset form
+  document.getElementById('gcf_amount').value  = '';
+  document.getElementById('gcf_remarks').value = '';
+
+  renderGlobal();
+  toast('success', `${dir === 'Inflow' ? 'Deposit' : 'Withdrawal'} of ${sym}${formatNum(amount.toFixed(2))} added`);
+}
+window.addGlobalCashFlow = addGlobalCashFlow;
 
 function driveSaveSetup() {
   const input = document.getElementById('driveClientIdInput');
