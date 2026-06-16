@@ -4463,11 +4463,14 @@ function clearAllData() {
 function exportJson() {
   const payload = {
     v: 1, exportedAt: new Date().toISOString(),
-    transactions: state.transactions,
-    prices: state.prices,
-    fx: state.fx,
-    snapshots: state.snapshots,
-    manualEntries: state.manualEntries,
+    transactions:    state.transactions,
+    prices:          state.prices,
+    fx:              state.fx,
+    snapshots:       state.snapshots,
+    manualEntries:   state.manualEntries,
+    cashFlows:       state.cashFlows       || [],
+    globalCashFlows: state.globalCashFlows || [],
+    accounts:        state.accounts        || [],
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
