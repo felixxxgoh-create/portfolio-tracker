@@ -8274,15 +8274,16 @@ async function _handleDriveError(resp) {
 // Export the full state object for Drive saving
 function exportStateObject() {
   return {
-    transactions:   state.transactions,
-    prices:         state.prices,
-    fx:             state.fx,
-    snapshots:      state.snapshots,
-    cashFlows:      state.cashFlows,
-    accounts:       state.accounts,
-    manualEntries:  state.manualEntries,
-    _savedAt:       new Date().toISOString(),
-    _version:       '1.0',
+    transactions:    state.transactions,
+    prices:          state.prices,
+    fx:              state.fx,
+    snapshots:       state.snapshots,
+    cashFlows:       state.cashFlows,
+    globalCashFlows: state.globalCashFlows || [],
+    accounts:        state.accounts,
+    manualEntries:   state.manualEntries,
+    _savedAt:        new Date().toISOString(),
+    _version:        '1.0',
   };
 }
 
